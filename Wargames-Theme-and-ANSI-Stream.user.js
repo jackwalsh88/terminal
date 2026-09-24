@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.6.4
+// @version      3.6.5
 // @description  Wargames theme, ANSI stream, and Bit activity mascot for Claude Code.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -598,7 +598,9 @@ body::after {
   const host = document.createElement('div');
   host.id = 'wargames-ansi-stream';
   // Shadow DOM keeps the theme's global rules away from the artwork controls.
-  host.style.cssText = 'all:initial!important;position:fixed!important;display:none!important;z-index:30!important;';
+  // Keep moving ANSI pixels above the page-wide CRT grille. Sliding detailed
+  // text beneath fixed scanlines creates temporal moire that looks like blink.
+  host.style.cssText = 'all:initial!important;position:fixed!important;display:none!important;z-index:2147483647!important;';
   const shadow = host.attachShadow({ mode: 'open' });
   const style = document.createElement('style');
   style.textContent = `
@@ -618,7 +620,7 @@ body::after {
     .loading[hidden] { display:none; }
     .track { will-change:transform; transform:translate3d(0,0,0); contain:paint; }
     figure { margin:0; padding:0 0 12px; }
-    img { display:block; width:100%; height:auto; image-rendering:pixelated; opacity:1; }
+    img { display:block; width:100%; height:auto; image-rendering:auto; opacity:1; }
     figcaption { padding:6px 2px; color:#80b59a; font-size:8px; overflow-wrap:anywhere; }
     @media print, (forced-colors:active) { .panel { display:none; } }
   `;
@@ -1054,8 +1056,12 @@ body::after {
     const editorRect = editor.getBoundingClientRect();
     const inputRect = input.getBoundingClientRect();
     const inputStyle = getComputedStyle(input);
+    const fontSize = parseFloat(inputStyle.fontSize) || 16;
+    const lineHeight = parseFloat(inputStyle.lineHeight) || fontSize * 1.2;
+    // Anchor to row one only. Using inputRect.height centered the marker across
+    // the entire multiline composer and caused it to overlap later text rows.
     promptChevron.style.top = `${Math.round(inputRect.top - editorRect.top)}px`;
-    promptChevron.style.height = `${Math.round(inputRect.height)}px`;
+    promptChevron.style.height = `${Math.round(lineHeight)}px`;
     promptChevron.style.fontFamily = inputStyle.fontFamily;
     promptChevron.style.fontSize = inputStyle.fontSize;
     promptChevron.style.lineHeight = inputStyle.lineHeight;
