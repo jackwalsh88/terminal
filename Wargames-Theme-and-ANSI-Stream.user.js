@@ -1,19 +1,31 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.6.3
+// @version      3.6.4
 // @description  Wargames theme, ANSI stream, and Bit activity mascot for Claude Code.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
 // @downloadURL  https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
-// @run-at       document-end
+// @run-at       document-start
 // @noframes
 // @grant        GM_xmlhttpRequest
 // @connect      16colo.rs
 // ==/UserScript==
 
-(() => {
+(async () => {
   'use strict';
+  // document-start removes Claude's several-second load gate. Firefox can run
+  // this before <html> exists, so wait only for that root node, not DOM ready.
+  if (!document.documentElement) {
+    await new Promise(resolve => {
+      const observer = new MutationObserver(() => {
+        if (!document.documentElement) return;
+        observer.disconnect();
+        resolve();
+      });
+      observer.observe(document, { childList: true });
+    });
+  }
   // Replace the old ANSI Art Stream script with this complete script.
   // Disable the separate Wargames Stylus style; keep the random header script.
   // CSS applies only on /code, including Claude's in-app navigation.
@@ -325,11 +337,15 @@ main::before {
 }
 
 [data-cds="ChatComposerEditor"]::before {
-  content: ">";
+  content: none !important;
+}
+
+[data-wargames-prompt-chevron="true"] {
   position: absolute;
   left: 0;
-  top: 50%;
-  transform: translateY(-50%) translateY(1px);
+  display: flex;
+  align-items: center;
+  padding-top: 1px;
   color: var(--ansi-cyan);
   font-family: var(--ansi-font, monospace);
   font-size: inherit;
@@ -600,9 +616,9 @@ body::after {
       font:10px/1.5 "Departure Mono",Consolas,monospace;
       letter-spacing:.08em; text-shadow:0 0 5px #00e5ff80; }
     .loading[hidden] { display:none; }
-    .track { will-change:transform; }
+    .track { will-change:transform; transform:translate3d(0,0,0); contain:paint; }
     figure { margin:0; padding:0 0 12px; }
-    img { display:block; width:100%; height:auto; image-rendering:pixelated; opacity:.88; }
+    img { display:block; width:100%; height:auto; image-rendering:pixelated; opacity:1; }
     figcaption { padding:6px 2px; color:#80b59a; font-size:8px; overflow-wrap:anywhere; }
     @media print, (forced-colors:active) { .panel { display:none; } }
   `;
@@ -624,7 +640,7 @@ body::after {
   viewport.append(loadingMessage, track);
   panel.append(button, viewport);
   shadow.append(style, panel);
-  document.body.append(host);
+  document.documentElement.append(host);
 
   // Phase 2: replace only Claude's small orange composer mascot with a
   // Bit-inspired faceted indicator. The native element keeps its layout box;
@@ -887,16 +903,15 @@ body::after {
       track.append(copy);
     }
     cycleHeight = height;
-    // Advance in whole physical pixels. Fractional transforms make the hard
-    // ANSI edges shimmer or "blink" as the browser repeatedly resamples them.
-    const pixelSteps = Math.max(1, Math.round(height * (devicePixelRatio || 1)));
+    // Keep the track continuously composited. The earlier stepped easing made
+    // every pixel advance read as a brightness flash in high-contrast ANSI art.
     animation = track.animate([
-      { transform: 'translateY(0)' },
-      { transform: `translateY(-${height}px)` },
+      { transform: 'translate3d(0,0,0)' },
+      { transform: `translate3d(0,-${height}px,0)` },
     ], {
       duration: height / SPEED * 1000,
       iterations: Infinity,
-      easing: `steps(${pixelSteps}, end)`
+      easing: 'linear'
     });
     animation.currentTime = progress * height / SPEED * 1000;
     updatePlayback();
@@ -1013,6 +1028,39 @@ body::after {
     }
   }
 
+  let promptChevron = null;
+  let promptChevronEditor = null;
+
+  function syncPromptChevron(editor) {
+    if (!editor) {
+      promptChevron?.remove();
+      promptChevron = null;
+      promptChevronEditor = null;
+      return;
+    }
+    const input = editor.querySelector(
+      '[contenteditable="true"][data-testid="code-prompt-input"], [contenteditable="true"]'
+    );
+    if (!input) return;
+    if (!promptChevron || promptChevronEditor !== editor) {
+      promptChevron?.remove();
+      promptChevron = document.createElement('span');
+      promptChevron.setAttribute('data-wargames-prompt-chevron', 'true');
+      promptChevron.setAttribute('aria-hidden', 'true');
+      promptChevron.textContent = '>';
+      editor.append(promptChevron);
+      promptChevronEditor = editor;
+    }
+    const editorRect = editor.getBoundingClientRect();
+    const inputRect = input.getBoundingClientRect();
+    const inputStyle = getComputedStyle(input);
+    promptChevron.style.top = `${Math.round(inputRect.top - editorRect.top)}px`;
+    promptChevron.style.height = `${Math.round(inputRect.height)}px`;
+    promptChevron.style.fontFamily = inputStyle.fontFamily;
+    promptChevron.style.fontSize = inputStyle.fontSize;
+    promptChevron.style.lineHeight = inputStyle.lineHeight;
+  }
+
   function checkSpace() {
     const codeRoute = /^\/code(?:\/|$)/.test(location.pathname);
     themeStyle.disabled = !codeRoute;
@@ -1020,6 +1068,7 @@ body::after {
     const left = innerWidth - WIDTH - MARGIN;
     const lower = innerHeight - BOTTOM;
     const editor = document.querySelector('[data-cds="ChatComposerEditor"]');
+    syncPromptChevron(editor);
     syncBitMascot(editor, codeRoute);
     if (codeRoute && editor) widenConversation(editor, left);
     // The feed owns its reserved gutter for the entire Code route. Do not tie
