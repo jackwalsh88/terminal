@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.6.6
+// @version      3.6.7
 // @description  Wargames theme, ANSI stream, and Bit activity mascot for Claude Code.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -337,12 +337,11 @@ main::before {
 }
 
 [data-cds="ChatComposerEditor"]::before {
-  content: none !important;
-}
-
-[data-wargames-prompt-chevron="true"] {
+  content: ">" !important;
   position: absolute;
   left: 0;
+  top: var(--wargames-prompt-top, 0px);
+  height: var(--wargames-prompt-line-height, 1.2em);
   display: flex;
   align-items: center;
   padding-top: 1px;
@@ -636,6 +635,20 @@ body::after {
   panel.append(button, viewport);
   shadow.append(style, panel);
   document.documentElement.append(host);
+  // Start immediately, then return the panel to <body> as soon as it exists so
+  // the original page-wide CRT overlay paints above it exactly as before.
+  const moveHostIntoBody = () => {
+    if (!document.body || host.parentNode === document.body) return !!document.body;
+    document.body.append(host);
+    return true;
+  };
+  if (!moveHostIntoBody()) {
+    const bodyObserver = new MutationObserver(() => {
+      if (!moveHostIntoBody()) return;
+      bodyObserver.disconnect();
+    });
+    bodyObserver.observe(document.documentElement, { childList: true });
+  }
 
   // Phase 2: replace only Claude's small orange composer mascot with a
   // Bit-inspired faceted indicator. The native element keeps its layout box;
@@ -1023,41 +1036,24 @@ body::after {
     }
   }
 
-  let promptChevron = null;
-  let promptChevronEditor = null;
-
   function syncPromptChevron(editor) {
-    if (!editor) {
-      promptChevron?.remove();
-      promptChevron = null;
-      promptChevronEditor = null;
-      return;
-    }
+    if (!editor) return;
     const input = editor.querySelector(
       '[contenteditable="true"][data-testid="code-prompt-input"], [contenteditable="true"]'
     );
     if (!input) return;
-    if (!promptChevron || promptChevronEditor !== editor) {
-      promptChevron?.remove();
-      promptChevron = document.createElement('span');
-      promptChevron.setAttribute('data-wargames-prompt-chevron', 'true');
-      promptChevron.setAttribute('aria-hidden', 'true');
-      promptChevron.textContent = '>';
-      editor.append(promptChevron);
-      promptChevronEditor = editor;
-    }
+    // Remove the v3.6.4-v3.6.6 real child if this tab retained one during an
+    // extension update. Pseudo-content cannot enter or overlap editable text.
+    editor.querySelector('[data-wargames-prompt-chevron="true"]')?.remove();
     const editorRect = editor.getBoundingClientRect();
     const inputRect = input.getBoundingClientRect();
     const inputStyle = getComputedStyle(input);
     const fontSize = parseFloat(inputStyle.fontSize) || 16;
     const lineHeight = parseFloat(inputStyle.lineHeight) || fontSize * 1.2;
-    // Anchor to row one only. Using inputRect.height centered the marker across
-    // the entire multiline composer and caused it to overlap later text rows.
-    promptChevron.style.top = `${Math.round(inputRect.top - editorRect.top)}px`;
-    promptChevron.style.height = `${Math.round(lineHeight)}px`;
-    promptChevron.style.fontFamily = inputStyle.fontFamily;
-    promptChevron.style.fontSize = inputStyle.fontSize;
-    promptChevron.style.lineHeight = inputStyle.lineHeight;
+    editor.style.setProperty(
+      '--wargames-prompt-top', `${Math.round(inputRect.top - editorRect.top)}px`
+    );
+    editor.style.setProperty('--wargames-prompt-line-height', `${Math.round(lineHeight)}px`);
   }
 
   function checkSpace() {
