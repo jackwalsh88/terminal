@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.6.7
+// @version      3.7.8
 // @description  Wargames theme, ANSI stream, and Bit activity mascot for Claude Code.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -380,6 +380,25 @@ body::after {
   opacity: var(--ansi-scan-opacity);
 }
 
+/* Dedicated top-level CRT glass. Claude's application shells can isolate body
+   pseudo-elements in their own stacking context, so this node is anchored to
+   <html> and remains above both the app and the ANSI feed. */
+#wargames-crt-overlay {
+  all: initial !important;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 2147483646 !important;
+  pointer-events: none !important;
+  display: block !important;
+  background-image:
+    repeating-linear-gradient(0deg, #0000 0 2px, #0000001a 2px 3px),
+    repeating-linear-gradient(90deg, #00ff6605 0 1px, #0000 1px 3px) !important;
+  box-shadow:
+    inset 0 0 120px rgb(0 0 0 / var(--wargames-vignette)),
+    inset 0 0 32px rgb(0 255 140 / .035) !important;
+  opacity: var(--ansi-scan-opacity) !important;
+}
+
 * {
   scrollbar-width: none !important;
 }
@@ -421,6 +440,12 @@ body::after {
 `;
   themeStyle.disabled = !/^\/code(?:\/|$)/.test(location.pathname);
   document.documentElement.append(themeStyle);
+
+  // Keep the CRT glass independent of Claude's React/body stacking contexts.
+  const crtOverlay = document.createElement('div');
+  crtOverlay.id = 'wargames-crt-overlay';
+  crtOverlay.setAttribute('aria-hidden', 'true');
+  document.documentElement.append(crtOverlay);
 
   // Fetch selected images from 16colo.rs through Violentmonkey; do not alter Claude's layout.
   const SPEED = 10; // pixels per second
@@ -1051,7 +1076,7 @@ body::after {
     const fontSize = parseFloat(inputStyle.fontSize) || 16;
     const lineHeight = parseFloat(inputStyle.lineHeight) || fontSize * 1.2;
     editor.style.setProperty(
-      '--wargames-prompt-top', `${Math.round(inputRect.top - editorRect.top)}px`
+      '--wargames-prompt-top', `${Math.round(inputRect.top - editorRect.top) + 1}px`
     );
     editor.style.setProperty('--wargames-prompt-line-height', `${Math.round(lineHeight)}px`);
   }
