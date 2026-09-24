@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.6.2
+// @version      3.6.3
 // @description  Wargames theme, ANSI stream, and Bit activity mascot for Claude Code.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -328,7 +328,8 @@ main::before {
   content: ">";
   position: absolute;
   left: 0;
-  top: 2px;
+  top: 50%;
+  transform: translateY(-50%) translateY(1px);
   color: var(--ansi-cyan);
   font-family: var(--ansi-font, monospace);
   font-size: inherit;
@@ -888,7 +889,7 @@ body::after {
     cycleHeight = height;
     // Advance in whole physical pixels. Fractional transforms make the hard
     // ANSI edges shimmer or "blink" as the browser repeatedly resamples them.
-    const pixelSteps = Math.max(1, Math.round(height));
+    const pixelSteps = Math.max(1, Math.round(height * (devicePixelRatio || 1)));
     animation = track.animate([
       { transform: 'translateY(0)' },
       { transform: `translateY(-${height}px)` },
@@ -1021,24 +1022,11 @@ body::after {
     const editor = document.querySelector('[data-cds="ChatComposerEditor"]');
     syncBitMascot(editor, codeRoute);
     if (codeRoute && editor) widenConversation(editor, left);
-    // The frame is allowed to appear before any artwork has downloaded.
-    let allowed = codeRoute && !!editor && innerWidth >= 1100 && innerHeight >= 500;
-    // Hide when a visible message, code block, editor or right-side panel needs this gutter.
-    // Never shrink/reposition the chat, and never read its text.
-    if (allowed) {
-      const elements = document.querySelectorAll(
-        '.font-claude-message, .prose, .cds-user-message-body, ' +
-        '[data-cds="ChatComposerEditor"], main pre, [role="dialog"], aside'
-      );
-      for (const element of elements) {
-        const r = element.getBoundingClientRect();
-        if (r.width && r.height && r.bottom > TOP && r.top < lower &&
-            r.right > left - 20 && r.left < innerWidth) {
-          allowed = false;
-          break;
-        }
-      }
-    }
+    // The feed owns its reserved gutter for the entire Code route. Do not tie
+    // visibility to Claude's transient composer/message geometry: React can
+    // briefly remove or resize those nodes while loading, which made the panel
+    // arrive late and flash off during otherwise normal layout updates.
+    const allowed = codeRoute && innerWidth >= 1100 && innerHeight >= 500;
     host.style.setProperty('width', `${WIDTH}px`, 'important');
     host.style.setProperty('right', `${MARGIN}px`, 'important');
     host.style.setProperty('top', `${TOP}px`, 'important');
