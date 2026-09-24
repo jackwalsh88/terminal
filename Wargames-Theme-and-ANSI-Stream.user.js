@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.6.5
+// @version      3.6.6
 // @description  Wargames theme, ANSI stream, and Bit activity mascot for Claude Code.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -79,7 +79,7 @@
 html, body {
   background-color: var(--ansi-bg) !important;
   color: var(--ansi-text) !important;
-  scrollbar-color: var(--ansi-border) #010804;
+  scrollbar-width: none !important;
 }
 
 main {
@@ -381,19 +381,14 @@ body::after {
   opacity: var(--ansi-scan-opacity);
 }
 
+* {
+  scrollbar-width: none !important;
+}
+
 *::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-
-*::-webkit-scrollbar-track {
-  background: #010804;
-}
-
-*::-webkit-scrollbar-thumb {
-  background: #1a4d36;
-  border: 1px solid #145938;
-  border-radius: 0;
+  display: none !important;
+  width: 0 !important;
+  height: 0 !important;
 }
 
 ::selection {
@@ -598,9 +593,7 @@ body::after {
   const host = document.createElement('div');
   host.id = 'wargames-ansi-stream';
   // Shadow DOM keeps the theme's global rules away from the artwork controls.
-  // Keep moving ANSI pixels above the page-wide CRT grille. Sliding detailed
-  // text beneath fixed scanlines creates temporal moire that looks like blink.
-  host.style.cssText = 'all:initial!important;position:fixed!important;display:none!important;z-index:2147483647!important;';
+  host.style.cssText = 'all:initial!important;position:fixed!important;display:none!important;z-index:30!important;';
   const shadow = host.attachShadow({ mode: 'open' });
   const style = document.createElement('style');
   style.textContent = `
@@ -620,7 +613,7 @@ body::after {
     .loading[hidden] { display:none; }
     .track { will-change:transform; transform:translate3d(0,0,0); contain:paint; }
     figure { margin:0; padding:0 0 12px; }
-    img { display:block; width:100%; height:auto; image-rendering:auto; opacity:1; }
+    img { display:block; width:100%; height:auto; image-rendering:pixelated; opacity:1; }
     figcaption { padding:6px 2px; color:#80b59a; font-size:8px; overflow-wrap:anywhere; }
     @media print, (forced-colors:active) { .panel { display:none; } }
   `;
