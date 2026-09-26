@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.7.9
+// @version      3.8.0
 // @description  Wargames theme, ANSI stream, and Bit activity mascot for Claude Code.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -393,11 +393,14 @@ body::after {
   isolation: isolate !important;
   transform: translateZ(0) !important;
   background-image:
-    repeating-linear-gradient(0deg, #0000 0 2px, #0000001a 2px 3px),
-    repeating-linear-gradient(90deg, #00ff6605 0 1px, #0000 1px 3px) !important;
+    radial-gradient(ellipse at center, #0000 48%, #00000024 78%, #00000080 100%),
+    repeating-linear-gradient(0deg, #0000 0 2px, #00000042 2px 3px),
+    repeating-linear-gradient(90deg, #00ff6612 0 1px, #0000 1px 3px) !important;
   box-shadow:
-    inset 0 0 120px rgb(0 0 0 / var(--wargames-vignette)),
-    inset 0 0 32px rgb(0 255 140 / .035) !important;
+    inset 0 0 150px rgb(0 0 0 / .70),
+    inset 0 0 42px rgb(0 255 140 / .08) !important;
+  backdrop-filter: contrast(1.04) saturate(.92) !important;
+  -webkit-backdrop-filter: contrast(1.04) saturate(.92) !important;
   opacity: 1 !important;
 }
 
