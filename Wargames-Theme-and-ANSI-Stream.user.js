@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.8.0
+// @version      3.8.1
 // @description  Wargames theme, ANSI stream, and Bit activity mascot for Claude Code.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -450,13 +450,29 @@ body::after {
   const crtOverlay = document.createElement('div');
   crtOverlay.id = 'wargames-crt-overlay';
   crtOverlay.setAttribute('aria-hidden', 'true');
+  crtOverlay.style.cssText = [
+    'all:initial!important',
+    'position:fixed!important',
+    'inset:0!important',
+    'width:100vw!important',
+    'height:100vh!important',
+    'z-index:2147483647!important',
+    'pointer-events:none!important',
+    'isolation:isolate!important',
+    'transform:translateZ(0)!important',
+    'background-image:radial-gradient(ellipse at center,#0000 48%,#00000024 78%,#00000080 100%),repeating-linear-gradient(0deg,#0000 0 2px,#00000042 2px 3px),repeating-linear-gradient(90deg,#00ff6612 0 1px,#0000 1px 3px)!important',
+    'box-shadow:inset 0 0 150px rgb(0 0 0/.70),inset 0 0 42px rgb(0 255 140/.08)!important',
+    'opacity:1!important'
+  ].join(';');
   document.documentElement.append(crtOverlay);
 
   function ensureCrtOverlay() {
-    // React can replace early document-start children while hydrating. Keep the
-    // glass attached to the live body after it exists, and restore it if lost.
-    const parent = document.body || document.documentElement;
-    if (crtOverlay.parentNode !== parent) parent.append(crtOverlay);
+    // Keep the glass outside Claude's managed body and its stacking contexts.
+    // Critical styles are inline so React cannot neutralize the overlay by
+    // replacing or disabling the injected stylesheet during hydration.
+    if (crtOverlay.parentNode !== document.documentElement) {
+      document.documentElement.append(crtOverlay);
+    }
   }
 
   // Fetch selected images from 16colo.rs through Violentmonkey; do not alter Claude's layout.
@@ -1097,6 +1113,7 @@ body::after {
     const codeRoute = /^\/code(?:\/|$)/.test(location.pathname);
     themeStyle.disabled = !codeRoute;
     ensureCrtOverlay();
+    crtOverlay.style.setProperty('display', codeRoute ? 'block' : 'none', 'important');
     if (codeRoute) markClaudeWordmark();
     const left = innerWidth - WIDTH - MARGIN;
     const lower = innerHeight - BOTTOM;
