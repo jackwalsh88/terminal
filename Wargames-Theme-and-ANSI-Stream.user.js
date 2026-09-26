@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.8.1
+// @version      3.8.2
 // @description  Wargames theme, ANSI stream, and Bit activity mascot for Claude Code.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -393,11 +393,11 @@ body::after {
   isolation: isolate !important;
   transform: translateZ(0) !important;
   background-image:
-    radial-gradient(ellipse at center, #0000 48%, #00000024 78%, #00000080 100%),
+    radial-gradient(ellipse at center, #0000 48%, #00000019 78%, #0000005a 100%),
     repeating-linear-gradient(0deg, #0000 0 2px, #00000042 2px 3px),
     repeating-linear-gradient(90deg, #00ff6612 0 1px, #0000 1px 3px) !important;
   box-shadow:
-    inset 0 0 150px rgb(0 0 0 / .70),
+    inset 0 0 150px rgb(0 0 0 / .49),
     inset 0 0 42px rgb(0 255 140 / .08) !important;
   backdrop-filter: contrast(1.04) saturate(.92) !important;
   -webkit-backdrop-filter: contrast(1.04) saturate(.92) !important;
@@ -460,8 +460,8 @@ body::after {
     'pointer-events:none!important',
     'isolation:isolate!important',
     'transform:translateZ(0)!important',
-    'background-image:radial-gradient(ellipse at center,#0000 48%,#00000024 78%,#00000080 100%),repeating-linear-gradient(0deg,#0000 0 2px,#00000042 2px 3px),repeating-linear-gradient(90deg,#00ff6612 0 1px,#0000 1px 3px)!important',
-    'box-shadow:inset 0 0 150px rgb(0 0 0/.70),inset 0 0 42px rgb(0 255 140/.08)!important',
+    'background-image:radial-gradient(ellipse at center,#0000 48%,#00000019 78%,#0000005a 100%),repeating-linear-gradient(0deg,#0000 0 2px,#00000042 2px 3px),repeating-linear-gradient(90deg,#00ff6612 0 1px,#0000 1px 3px)!important',
+    'box-shadow:inset 0 0 150px rgb(0 0 0/.49),inset 0 0 42px rgb(0 255 140/.08)!important',
     'opacity:1!important'
   ].join(';');
   document.documentElement.append(crtOverlay);
@@ -1198,37 +1198,3 @@ body::after {
       loading = false;
       loadFailed = true;
       loadingMessage.textContent = '/// DARKNESS LINK FAILED';
-      checkSpace();
-      updatePlayback();
-      console.warn('Wargames ANSI stream: Darkness could not load from 16colo.rs.');
-      return;
-    }
-
-    ready = true;
-    loading = false;
-    loadingMessage.hidden = true;
-    checkSpace();
-    rebuild();
-
-    // Keep the live loop stable on Darkness while the rest load off-screen.
-    // They are added to the real stream together after the batch completes.
-    const staging = document.createElement('div');
-    const remaining = ARTWORKS.slice(1);
-    let next = 0;
-    let loaded = 0;
-    async function worker() {
-      while (next < remaining.length) {
-        const art = remaining[next++];
-        if (await loadArtwork(art, staging)) loaded++;
-        await new Promise(resolve => setTimeout(resolve, 500));
-      }
-    }
-    await Promise.all([worker(), worker()]);
-    group.append(...staging.children);
-    rebuild();
-    if (!loaded) console.warn('Wargames ANSI stream: additional images could not load from 16colo.rs.');
-  }
-  // Paint the frame before beginning any network request.
-  checkSpace();
-  loadSelection();
-})();
