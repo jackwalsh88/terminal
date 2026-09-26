@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.8.2
+// @version      3.8.3
 // @description  Wargames theme, ANSI stream, and Bit activity mascot for Claude Code.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -1113,6 +1113,10 @@ body::after {
     const codeRoute = /^\/code(?:\/|$)/.test(location.pathname);
     themeStyle.disabled = !codeRoute;
     ensureCrtOverlay();
+    // Claude can replace its body subtree during session/navigation updates.
+    // Remount our persistent UI if that React refresh detached either host.
+    if (document.body && !host.isConnected) document.body.append(host);
+    if (document.body && !bitHost.isConnected) document.body.append(bitHost);
     crtOverlay.style.setProperty('display', codeRoute ? 'block' : 'none', 'important');
     if (codeRoute) markClaudeWordmark();
     const left = innerWidth - WIDTH - MARGIN;
@@ -1198,3 +1202,37 @@ body::after {
       loading = false;
       loadFailed = true;
       loadingMessage.textContent = '/// DARKNESS LINK FAILED';
+      checkSpace();
+      updatePlayback();
+      console.warn('Wargames ANSI stream: Darkness could not load from 16colo.rs.');
+      return;
+    }
+
+    ready = true;
+    loading = false;
+    loadingMessage.hidden = true;
+    checkSpace();
+    rebuild();
+
+    // Keep the live loop stable on Darkness while the rest load off-screen.
+    // They are added to the real stream together after the batch completes.
+    const staging = document.createElement('div');
+    const remaining = ARTWORKS.slice(1);
+    let next = 0;
+    let loaded = 0;
+    async function worker() {
+      while (next < remaining.length) {
+        const art = remaining[next++];
+        if (await loadArtwork(art, staging)) loaded++;
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+    }
+    await Promise.all([worker(), worker()]);
+    group.append(...staging.children);
+    rebuild();
+    if (!loaded) console.warn('Wargames ANSI stream: additional images could not load from 16colo.rs.');
+  }
+  // Paint the frame before beginning any network request.
+  checkSpace();
+  loadSelection();
+})();
