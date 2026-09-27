@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.8.4
+// @version      3.8.5
 // @description  Wargames theme, ANSI stream, and Bit activity mascot for Claude Code.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -363,6 +363,8 @@ main::before {
 
 [data-cds="ChatComposerEditor"]
   [contenteditable="true"][data-testid="code-prompt-input"] {
+  padding-left: 1.5em !important;
+  box-sizing: border-box !important;
   caret-color: #fff !important;
   outline: none !important;
 }
@@ -855,7 +857,7 @@ body::after {
     bitHost.style.setProperty('width', `${size}px`, 'important');
     bitHost.style.setProperty('height', `${size}px`, 'important');
     bitHost.style.setProperty('left', `${Math.round(rect.left + rect.width / 2 - size / 2)}px`, 'important');
-    bitHost.style.setProperty('top', `${Math.round(rect.top + rect.height / 2 - size / 2)}px`, 'important');
+    bitHost.style.setProperty('top', `${Math.round(rect.top + rect.height / 2 - size / 2 + 24)}px`, 'important');
     bitHost.style.setProperty('display', 'block', 'important');
     lastMascotRect = {
       left: rect.left, top: rect.top, width: rect.width, height: rect.height
