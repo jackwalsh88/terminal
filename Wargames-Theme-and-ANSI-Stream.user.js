@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.9.1
+// @version      3.9.2
 // @description  Wargames theme, ANSI stream, and Bit activity mascot for Claude Code.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -361,10 +361,26 @@ main::before {
   box-sizing: border-box !important;
 }
 
-/* Chrome paints Claude's placeholder beneath the live caret. The native
-   placeholder returns as soon as focus leaves the empty composer. */
-[data-cds="ChatComposerEditor"]:focus-within [data-composer-placeholder] {
-  visibility: hidden !important;
+/* Chrome paints Claude's placeholder beneath the live caret. Claude has used
+   both generated pseudo-text and a separate text overlay, so cover both. */
+[data-cds="ChatComposerEditor"]:focus-within [data-composer-placeholder],
+[data-cds="ChatComposerEditor"]:focus-within [data-wargames-placeholder-overlay="true"] {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+[data-cds="ChatComposerEditor"]:focus-within [data-placeholder]::before,
+[data-cds="ChatComposerEditor"]:focus-within [contenteditable="true"]::before,
+[data-cds="ChatComposerEditor"]:focus-within
+  [contenteditable="true"] > :first-child::before {
+  content: "" !important;
+  opacity: 0 !important;
+}
+
+[data-cds="ChatComposerEditor"]:focus-within input::placeholder,
+[data-cds="ChatComposerEditor"]:focus-within textarea::placeholder {
+  color: transparent !important;
+  opacity: 0 !important;
 }
 
 [data-cds="ChatComposerEditor"]
@@ -2014,6 +2030,20 @@ body::after {
       '[contenteditable="true"][data-testid="code-prompt-input"], [contenteditable="true"]'
     );
     if (!input) return;
+    // Claude sometimes renders the faded prompt as a separate overlay rather
+    // than a CSS pseudo-element. Mark the innermost matching overlay so the
+    // focus rule above can suppress it without hiding the real editor/caret.
+    const placeholderText = 'Type / for commands';
+    const placeholderCandidates = [...editor.querySelectorAll('*')].filter(element =>
+      element !== input &&
+      !element.contains(input) &&
+      element.textContent.trim() === placeholderText
+    );
+    const placeholderOverlay = placeholderCandidates.find(element => !element.children.length) ||
+      placeholderCandidates.at(-1);
+    if (placeholderOverlay) {
+      placeholderOverlay.setAttribute('data-wargames-placeholder-overlay', 'true');
+    }
     // Remove the v3.6.4-v3.6.6 real child if this tab retained one during an
     // extension update. Pseudo-content cannot enter or overlap editable text.
     editor.querySelector('[data-wargames-prompt-chevron="true"]')?.remove();
