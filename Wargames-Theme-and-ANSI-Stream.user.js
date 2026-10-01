@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.9.4
+// @version      3.9.5
 // @description  Wargames theme, ANSI stream, and Bit activity mascot for Claude Code.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -131,9 +131,33 @@ main .cds-user-message-body {
   background-color: var(--ansi-panel) !important;
   border: 1px solid var(--ansi-border) !important;
   border-radius: 2px !important;
+  min-width: 0 !important;
+  overflow-wrap: anywhere !important;
   box-shadow:
     inset 0 0 8px #00ff960a,
     2px 2px 0 #000c !important;
+}
+
+/* Claude's outside list markers can extend beyond the user-message border.
+   Reserve a proper marker lane while preserving hanging-line alignment. */
+main .cds-user-message-body ol {
+  box-sizing: border-box !important;
+  list-style-position: outside !important;
+  margin-inline: 0 !important;
+  padding-inline-start: 3em !important;
+  max-width: 100% !important;
+}
+
+main .cds-user-message-body ul {
+  box-sizing: border-box !important;
+  list-style-position: outside !important;
+  margin-inline: 0 !important;
+  padding-inline-start: 2.5em !important;
+  max-width: 100% !important;
+}
+
+main .cds-user-message-body li {
+  overflow-wrap: anywhere !important;
 }
 
 /* Composer typography and caret. Preserve Claude's editor sizing and behavior. */
