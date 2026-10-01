@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.9.3
+// @version      3.9.4
 // @description  Wargames theme, ANSI stream, and Bit activity mascot for Claude Code.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -1921,6 +1921,43 @@ body::after {
     if (wordmark) wordmark.setAttribute('data-wargames-brand', 'true');
   }
 
+  function findPlanDrawerLeft(fallbackRight) {
+    let drawer = null;
+    let drawerLeft = fallbackRight;
+    const labels = [...document.querySelectorAll(
+      'h1, h2, h3, [role="heading"], button, span, div'
+    )].filter(element => {
+      if (element.childElementCount > 2) return false;
+      if (element.textContent?.trim() !== 'Plan') return false;
+      const rect = element.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0 && rect.left > innerWidth * .45;
+    });
+
+    for (const label of labels) {
+      for (let node = label; node && node !== document.body; node = node.parentElement) {
+        const rect = node.getBoundingClientRect();
+        const looksLikeDrawer =
+          rect.left > innerWidth * .45 &&
+          rect.top <= 100 &&
+          rect.bottom >= innerHeight * .75 &&
+          rect.width >= 280 &&
+          rect.width <= 720;
+        if (!looksLikeDrawer) continue;
+        if (rect.left < drawerLeft) {
+          drawer = node;
+          drawerLeft = Math.floor(rect.left);
+        }
+      }
+    }
+
+    for (const oldDrawer of document.querySelectorAll('[data-wargames-plan-drawer="true"]')) {
+      if (oldDrawer !== drawer) oldDrawer.removeAttribute('data-wargames-plan-drawer');
+    }
+    if (drawer) drawer.setAttribute('data-wargames-plan-drawer', 'true');
+    document.documentElement.toggleAttribute('data-wargames-plan-open', Boolean(drawer));
+    return Math.min(fallbackRight, drawerLeft);
+  }
+
   function widenConversation(editor, feedLeft) {
     const main = document.querySelector('main');
     if (!main || !editor || innerWidth < 1100) return;
@@ -1971,9 +2008,24 @@ body::after {
       reply.setAttribute('data-wargames-assistant-column', 'true');
     }
 
-    // Keep an existing outer composer mark stable between geometry checks.
+    // Keep existing outer composer marks, but update their translation when a
+    // right-side drawer opens or closes. The previous early return froze the
+    // column in its pre-drawer position and allowed messages to run underneath.
     const existingTargets = [...main.querySelectorAll('[data-wargames-wide-column="true"]')];
-    if (existingTargets.length) return;
+    if (existingTargets.length) {
+      for (const target of existingTargets) {
+        const rect = target.getBoundingClientRect();
+        if (!rect.width || !rect.height) continue;
+        const currentShift = parseFloat(
+          target.style.getPropertyValue('--wargames-content-shift')
+        ) || 0;
+        const correctedShift = currentShift + desiredLeft - rect.left;
+        target.style.setProperty(
+          '--wargames-content-shift', `${Math.round(correctedShift)}px`
+        );
+      }
+      return;
+    }
 
     const baseline = editor.getBoundingClientRect();
     if (!baseline.width) return;
@@ -2069,11 +2121,12 @@ body::after {
     crtOverlay.style.setProperty('display', codeRoute ? 'block' : 'none', 'important');
     if (codeRoute) markClaudeWordmark();
     const left = innerWidth - WIDTH - MARGIN;
+    const conversationRight = codeRoute ? findPlanDrawerLeft(left) : left;
     const lower = innerHeight - BOTTOM;
     const editor = document.querySelector('[data-cds="ChatComposerEditor"]');
     syncPromptChevron(editor);
     syncBitMascot(editor, codeRoute);
-    if (codeRoute && editor) widenConversation(editor, left);
+    if (codeRoute && editor) widenConversation(editor, conversationRight);
     // The feed owns its reserved gutter for the entire Code route. Do not tie
     // visibility to Claude's transient composer/message geometry: React can
     // briefly remove or resize those nodes while loading, which made the panel
