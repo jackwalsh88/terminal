@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.9.0
+// @version      3.9.1
 // @description  Wargames theme, ANSI stream, and Bit activity mascot for Claude Code.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -49,9 +49,9 @@
   --ansi-cyan: #00e5ff;
   --ansi-font: "Departure Mono", "Cascadia Code", "IBM Plex Mono",
     "Fira Code", Consolas, "Liberation Mono", monospace;
-  --ansi-scan-opacity: .45;
-  --wargames-glow: .32;
-  --wargames-vignette: .59;
+  --ansi-scan-opacity: .405;
+  --wargames-glow: .29;
+  --wargames-vignette: .50;
 }
 
 :root, [data-theme="dark"], .dark {
@@ -361,10 +361,10 @@ main::before {
   box-sizing: border-box !important;
 }
 
-/* Claude leaves the placeholder painted beneath the live caret while the
-   empty composer has focus. Give the caret one character cell of clearance. */
+/* Chrome paints Claude's placeholder beneath the live caret. The native
+   placeholder returns as soon as focus leaves the empty composer. */
 [data-cds="ChatComposerEditor"]:focus-within [data-composer-placeholder] {
-  transform: translateX(1em) !important;
+  visibility: hidden !important;
 }
 
 [data-cds="ChatComposerEditor"]
@@ -401,11 +401,11 @@ body::after {
   isolation: isolate !important;
   transform: translateZ(0) !important;
   background-image:
-    radial-gradient(ellipse at center, #0000 48%, #00000014 78%, #00000048 100%),
-    repeating-linear-gradient(0deg, #0000 0 2px, #00000032 2px 3px),
-    repeating-linear-gradient(90deg, #00ff660e 0 1px, #0000 1px 3px) !important;
+    radial-gradient(ellipse at center, #0000 48%, #00000011 78%, #0000003d 100%),
+    repeating-linear-gradient(0deg, #0000 0 2px, #0000002d 2px 3px),
+    repeating-linear-gradient(90deg, #00ff660d 0 1px, #0000 1px 3px) !important;
   box-shadow:
-    inset 0 0 150px rgb(0 0 0 / .39),
+    inset 0 0 150px rgb(0 0 0 / .33),
     inset 0 0 42px rgb(0 255 140 / .08) !important;
   backdrop-filter: contrast(1.04) saturate(.92) !important;
   -webkit-backdrop-filter: contrast(1.04) saturate(.92) !important;
@@ -468,8 +468,8 @@ body::after {
     'pointer-events:none!important',
     'isolation:isolate!important',
     'transform:translateZ(0)!important',
-    'background-image:radial-gradient(ellipse at center,#0000 48%,#00000014 78%,#00000048 100%),repeating-linear-gradient(0deg,#0000 0 2px,#00000032 2px 3px),repeating-linear-gradient(90deg,#00ff660e 0 1px,#0000 1px 3px)!important',
-    'box-shadow:inset 0 0 150px rgb(0 0 0/.39),inset 0 0 42px rgb(0 255 140/.08)!important',
+    'background-image:radial-gradient(ellipse at center,#0000 48%,#00000011 78%,#0000003d 100%),repeating-linear-gradient(0deg,#0000 0 2px,#0000002d 2px 3px),repeating-linear-gradient(90deg,#00ff660d 0 1px,#0000 1px 3px)!important',
+    'box-shadow:inset 0 0 150px rgb(0 0 0/.33),inset 0 0 42px rgb(0 255 140/.08)!important',
     'opacity:1!important'
   ].join(';');
   document.documentElement.append(crtOverlay);
