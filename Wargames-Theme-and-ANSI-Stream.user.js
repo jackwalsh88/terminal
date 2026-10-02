@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.9.5
+// @version      3.9.6
 // @description  Wargames theme, ANSI stream, and Bit activity mascot for Claude Code.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -1621,6 +1621,13 @@ body::after {
     figure { margin:0; padding:0 0 12px; }
     img { display:block; width:100%; height:auto; image-rendering:pixelated; opacity:1; }
     figcaption { padding:6px 2px; color:#80b59a; font-size:8px; overflow-wrap:anywhere; }
+    .selection {
+      position:absolute; top:29px; left:0; right:0; z-index:5;
+      padding:7px 5px; background:#020805f2; color:#8fffab;
+      border-bottom:1px solid #145938; font-size:8px; line-height:1.35;
+      overflow-wrap:anywhere; cursor:pointer;
+    }
+    .selection[hidden] { display:none; }
     @media print, (forced-colors:active) { .panel { display:none; } }
   `;
   const panel = document.createElement('section');
@@ -1628,17 +1635,21 @@ body::after {
   panel.setAttribute('aria-label', 'ANSI artwork stream');
   const button = document.createElement('button');
   button.type = 'button';
-  button.title = 'Click to pause or resume. Hover over the artwork to pause temporarily.';
+  button.title = 'Click to pause or resume. Click artwork to show and copy its filename.';
   const viewport = document.createElement('div');
   viewport.className = 'viewport';
   const loadingMessage = document.createElement('div');
   loadingMessage.className = 'loading';
   loadingMessage.textContent = '/// LOADING...';
+  const selectedMessage = document.createElement('div');
+  selectedMessage.className = 'selection';
+  selectedMessage.hidden = true;
+  selectedMessage.title = 'Click to dismiss';
   const track = document.createElement('div');
   track.className = 'track';
   let group = document.createElement('div');
   track.append(group);
-  viewport.append(loadingMessage, track);
+  viewport.append(loadingMessage, selectedMessage, track);
   panel.append(button, viewport);
   shadow.append(style, panel);
   document.documentElement.append(host);
@@ -1882,6 +1893,7 @@ body::after {
 
   let animation = null;
   let cycleHeight = 0;
+  let selectedArtworkTitle = '';
   let ready = false;
   let loading = true;
   let loadFailed = false;
@@ -1899,6 +1911,7 @@ body::after {
     if (animation) paused ? animation.pause() : animation.play();
     if (loadFailed) button.textContent = 'ANSI // LINK FAILED';
     else if (loading) button.textContent = 'ANSI // LINKING';
+    else if (selectedArtworkTitle) button.textContent = 'ANSI // SELECTED';
     else button.textContent = paused ? 'ANSI // FEED PAUSED' : 'ANSI // VISUAL FEED';
     button.setAttribute('aria-pressed', String(manuallyPaused));
     button.setAttribute('aria-label', loading || loadFailed
@@ -2167,7 +2180,30 @@ body::after {
     updatePlayback();
   }
 
-  button.addEventListener('click', () => { manuallyPaused = !manuallyPaused; updatePlayback(); });
+  viewport.addEventListener('click', event => {
+    const figure = event.target.closest('figure[data-art-title]');
+    if (!figure) return;
+    selectedArtworkTitle = figure.dataset.artTitle || '';
+    if (!selectedArtworkTitle) return;
+    manuallyPaused = true;
+    selectedMessage.textContent = `SELECTED // ${selectedArtworkTitle}`;
+    selectedMessage.hidden = false;
+    if (navigator.clipboard?.writeText) {
+      navigator.clipboard.writeText(selectedArtworkTitle).catch(() => {});
+    }
+    updatePlayback();
+  });
+  selectedMessage.addEventListener('click', () => {
+    selectedArtworkTitle = '';
+    selectedMessage.hidden = true;
+    updatePlayback();
+  });
+  button.addEventListener('click', () => {
+    selectedArtworkTitle = '';
+    selectedMessage.hidden = true;
+    manuallyPaused = !manuallyPaused;
+    updatePlayback();
+  });
   panel.addEventListener('mouseenter', () => { hovering = true; updatePlayback(); });
   panel.addEventListener('mouseleave', () => { hovering = false; updatePlayback(); });
   document.addEventListener('visibilitychange', () => { checkSpace(); updatePlayback(); });
@@ -2181,6 +2217,8 @@ body::after {
   function loadArtwork(art, destination = group) {
     return new Promise(resolve => {
       const figure = document.createElement('figure');
+      figure.dataset.artTitle = art.title;
+      figure.title = 'Click to identify and copy filename';
       const img = document.createElement('img');
       img.alt = art.title;
       img.draggable = false;
