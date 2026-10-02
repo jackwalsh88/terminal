@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.9.7
+// @version      3.9.8
 // @description  Wargames theme, ANSI stream, and Bit activity mascot for Claude Code.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -1899,7 +1899,9 @@ body::after {
   let shown = false;
   let hovering = false;
   const BATCH_SIZE = 12;
+  let ciaQueue = [];
   let ciaCursor = 0;
+  let lastCiaTitle = '';
   let nextBatchPromise = null;
   let switchingBatch = false;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
@@ -2249,11 +2251,25 @@ body::after {
     });
   }
 
+  function shuffleCiaQueue() {
+    const queue = ARTWORKS.slice(1);
+    for (let i = queue.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [queue[i], queue[j]] = [queue[j], queue[i]];
+    }
+    // Avoid repeating the final artwork from the previous shuffle cycle.
+    if (queue.length > 1 && queue[0].title === lastCiaTitle) {
+      [queue[0], queue[1]] = [queue[1], queue[0]];
+    }
+    ciaQueue = queue;
+    ciaCursor = 0;
+  }
+
   function takeNextCiaBatch() {
-    const cia = ARTWORKS.slice(1);
-    if (ciaCursor >= cia.length) ciaCursor = 0;
-    const batch = cia.slice(ciaCursor, ciaCursor + BATCH_SIZE);
+    if (!ciaQueue.length || ciaCursor >= ciaQueue.length) shuffleCiaQueue();
+    const batch = ciaQueue.slice(ciaCursor, ciaCursor + BATCH_SIZE);
     ciaCursor += batch.length;
+    if (batch.length) lastCiaTitle = batch[batch.length - 1].title;
     return batch;
   }
 
