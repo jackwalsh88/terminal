@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.9.9
+// @version      3.10.0
 // @description  Wargames theme, ANSI stream, and Bit activity mascot for Claude Code.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -1946,7 +1946,12 @@ body::after {
       easing: 'linear'
     });
     animation.currentTime = progress * height / SPEED * 1000;
-    animation.onfinish = () => { void advanceBatch(); };
+    animation.onfinish = () => {
+      // A short final shuffle page can finish before the next page downloads.
+      // Keep replaying the current page so the panel never falls through to black.
+      if (switchingBatch) rebuild();
+      else void advanceBatch();
+    };
     updatePlayback();
   }
 
@@ -2295,6 +2300,10 @@ body::after {
   async function advanceBatch() {
     if (switchingBatch || !ready) return;
     switchingBatch = true;
+    // Hold the visual feed on a seamless repeat while the prefetched page settles.
+    // This matters at the shuffle boundary, where the final page may contain only
+    // one artwork and can outrun the next full page's network/decode time.
+    rebuild();
     let batch = null;
     for (let attempt = 0; attempt < 3; attempt++) {
       prepareNextBatch();
