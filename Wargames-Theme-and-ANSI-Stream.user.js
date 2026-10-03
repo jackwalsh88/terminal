@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.9.8
+// @version      3.9.9
 // @description  Wargames theme, ANSI stream, and Bit activity mascot for Claude Code.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -726,7 +726,6 @@ body::after {
     { title: "cia60-b__0199MEMB.CIA.png", src: "https://16colo.rs/pack/cia60-b/x1/0199MEMB.CIA.png" },
     { title: "cia60-b__CD!MOOF.ANS.png", src: "https://16colo.rs/pack/cia60-b/x1/CD%21MOOF.ANS.png" },
     { title: "cia60-b__CD!QTM2.ANS.png", src: "https://16colo.rs/pack/cia60-b/x1/CD%21QTM2.ANS.png" },
-    { title: "cia60-b__H-OBJUNK.ASC.png", src: "https://16colo.rs/pack/cia60-b/x1/H-OBJUNK.ASC.png" },
     { title: "cia60-b__ZZ-DZCLY.ASC.png", src: "https://16colo.rs/pack/cia60-b/x1/ZZ-DZCLY.ASC.png" },
     { title: "cia60-c__0199INFO.CIA.png", src: "https://16colo.rs/pack/cia60-c/x1/0199INFO.CIA.png" },
     { title: "cia60-c__0199MEMB.CIA.png", src: "https://16colo.rs/pack/cia60-c/x1/0199MEMB.CIA.png" },
