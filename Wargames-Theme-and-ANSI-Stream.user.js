@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.10.1
+// @version      3.10.2
 // @description  Wargames theme, ANSI stream, and Bit activity mascot for Claude Code.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -2162,23 +2162,21 @@ body::after {
     if (document.body && !bitHost.isConnected) document.body.append(bitHost);
     crtOverlay.style.setProperty('display', codeRoute ? 'block' : 'none', 'important');
     if (codeRoute) markClaudeWordmark();
-    const drawerLeft = codeRoute ? findPlanDrawerLeft(innerWidth) : innerWidth;
-    // Keep the ANSI panel immediately left of Claude's Plan drawer instead of
-    // allowing the fixed-right feed to sit on top of the drawer.
-    const panelRight = Math.max(MARGIN, innerWidth - drawerLeft + MARGIN);
-    const feedLeft = innerWidth - panelRight - WIDTH;
+    const feedLeft = innerWidth - WIDTH - MARGIN;
+    const conversationRight = codeRoute ? findPlanDrawerLeft(feedLeft) : feedLeft;
+    const planOpen = document.documentElement.hasAttribute('data-wargames-plan-open');
     const lower = innerHeight - BOTTOM;
     const editor = document.querySelector('[data-cds="ChatComposerEditor"]');
     syncPromptChevron(editor);
     syncBitMascot(editor, codeRoute);
-    if (codeRoute && editor) widenConversation(editor, feedLeft);
+    if (codeRoute && editor) widenConversation(editor, conversationRight);
     // The feed owns its reserved gutter for the entire Code route. Do not tie
     // visibility to Claude's transient composer/message geometry: React can
     // briefly remove or resize those nodes while loading, which made the panel
     // arrive late and flash off during otherwise normal layout updates.
-    const allowed = codeRoute && innerWidth >= 1100 && innerHeight >= 500;
+    const allowed = codeRoute && !planOpen && innerWidth >= 1100 && innerHeight >= 500;
     host.style.setProperty('width', `${WIDTH}px`, 'important');
-    host.style.setProperty('right', `${panelRight}px`, 'important');
+    host.style.setProperty('right', `${MARGIN}px`, 'important');
     host.style.setProperty('top', `${TOP}px`, 'important');
     host.style.setProperty('height', `${Math.max(0, lower - TOP)}px`, 'important');
     host.style.setProperty('display', allowed ? 'block' : 'none', 'important');
