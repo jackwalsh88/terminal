@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.10.3
-// @description  Wargames theme, ANSI stream, and Bit activity mascot for Claude Code.
+// @version      3.10.5
+// @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
 // @downloadURL  https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -49,9 +49,9 @@
   --ansi-cyan: #00e5ff;
   --ansi-font: "Departure Mono", "Cascadia Code", "IBM Plex Mono",
     "Fira Code", Consolas, "Liberation Mono", monospace;
-  --ansi-scan-opacity: .405;
+  --ansi-scan-opacity: .35235;
   --wargames-glow: .29;
-  --wargames-vignette: .50;
+  --wargames-vignette: .435;
 }
 
 :root, [data-theme="dark"], .dark {
@@ -1590,6 +1590,136 @@ body::after {
     { title: "cn_cia04__0295INFO.CIA.png", src: "https://16colo.rs/pack/cn_cia04/x1/0295INFO.CIA.png" },
     { title: "cn_cia04__0295MEMB.CIA.png", src: "https://16colo.rs/pack/cn_cia04/x1/0295MEMB.CIA.png" },
     { title: "cn_cia04__0295SITE.CIA.png", src: "https://16colo.rs/pack/cn_cia04/x1/0295SITE.CIA.png" },
+
+    // Selected verified iCE portrait artwork.
+    { title: "1991__BOTEEL.ANS.png", src: "https://16colo.rs/pack/1991/x1/BOTEEL.ANS.png" },
+    { title: "1991__FIAD.ANS.png", src: "https://16colo.rs/pack/1991/x1/FIAD.ANS.png" },
+    { title: "1991__GLDIG2.ANS.png", src: "https://16colo.rs/pack/1991/x1/GLDIG2.ANS.png" },
+    { title: "1991__LSD02.ANS.png", src: "https://16colo.rs/pack/1991/x1/LSD02.ANS.png" },
+    { title: "1991__LSD21.ANS.png", src: "https://16colo.rs/pack/1991/x1/LSD21.ANS.png" },
+    { title: "1991__PZASTR.ANS.png", src: "https://16colo.rs/pack/1991/x1/PZASTR.ANS.png" },
+    { title: "am-gore__PRELOG.ANS.png", src: "https://16colo.rs/pack/am-gore/x1/PRELOG.ANS.png" },
+    { title: "ic2-1193__AM-TSI.ICE.png", src: "https://16colo.rs/pack/ic2-1193/x1/AM-TSI.ICE.png" },
+    { title: "ic2-1193__CT-TAS1.ICE.png", src: "https://16colo.rs/pack/ic2-1193/x1/CT-TAS1.ICE.png" },
+    { title: "ic2-1193__ICE-1193.MEM.png", src: "https://16colo.rs/pack/ic2-1193/x1/ICE-1193.MEM.png" },
+    { title: "ic2-1193__ICE-1193.STS.png", src: "https://16colo.rs/pack/ic2-1193/x1/ICE-1193.STS.png" },
+    { title: "ic2-1193__JK-PL2.ICE.png", src: "https://16colo.rs/pack/ic2-1193/x1/JK-PL2.ICE.png" },
+    { title: "ic2-1193__MH-MM.ICE.png", src: "https://16colo.rs/pack/ic2-1193/x1/MH-MM.ICE.png" },
+    { title: "ic2-1193__MH-PRT2.ICE.png", src: "https://16colo.rs/pack/ic2-1193/x1/MH-PRT2.ICE.png" },
+    { title: "ic2-1193__MH-SERP.ICE.png", src: "https://16colo.rs/pack/ic2-1193/x1/MH-SERP.ICE.png" },
+    { title: "ic2-1193__MM-TFH.ICE.png", src: "https://16colo.rs/pack/ic2-1193/x1/MM-TFH.ICE.png" },
+    { title: "ic2-1193__RT-NSEC.ICE.png", src: "https://16colo.rs/pack/ic2-1193/x1/RT-NSEC.ICE.png" },
+    { title: "ic2-1193__SD-GODS.ICE.png", src: "https://16colo.rs/pack/ic2-1193/x1/SD-GODS.ICE.png" },
+    { title: "ic2-1193__SD-RISC2.ICE.png", src: "https://16colo.rs/pack/ic2-1193/x1/SD-RISC2.ICE.png" },
+    { title: "ic2-1193__SE-BITCH.ICE.png", src: "https://16colo.rs/pack/ic2-1193/x1/SE-BITCH.ICE.png" },
+    { title: "ic2-1193__SE-DAMAG.ICE.png", src: "https://16colo.rs/pack/ic2-1193/x1/SE-DAMAG.ICE.png" },
+    { title: "ic2-1193__SE-DRAG.ICE.png", src: "https://16colo.rs/pack/ic2-1193/x1/SE-DRAG.ICE.png" },
+    { title: "ic2-1193__SE-SHIT.ICE.png", src: "https://16colo.rs/pack/ic2-1193/x1/SE-SHIT.ICE.png" },
+    { title: "ic2-1193__TRW-TEC1.ICE.png", src: "https://16colo.rs/pack/ic2-1193/x1/TRW-TEC1.ICE.png" },
+    { title: "ic2-9502__ICE-9502.MEM.png", src: "https://16colo.rs/pack/ic2-9502/x1/ICE-9502.MEM.png" },
+    { title: "ic2-9502__ICE-9502.NFO.png", src: "https://16colo.rs/pack/ic2-9502/x1/ICE-9502.NFO.png" },
+    { title: "ic3-9501__ICE-9501.STS.png", src: "https://16colo.rs/pack/ic3-9501/x1/ICE-9501.STS.png" },
+    { title: "ice-0193__AA-DS9.ICE.png", src: "https://16colo.rs/pack/ice-0193/x1/AA-DS9.ICE.png" },
+    { title: "ice-0193__AM-ARKH.ICE.png", src: "https://16colo.rs/pack/ice-0193/x1/AM-ARKH.ICE.png" },
+    { title: "ice-0193__CY-CITY.ICE.png", src: "https://16colo.rs/pack/ice-0193/x1/CY-CITY.ICE.png" },
+    { title: "ice-0193__GR-DNB2.ICE.png", src: "https://16colo.rs/pack/ice-0193/x1/GR-DNB2.ICE.png" },
+    { title: "ice-0193__IC-HELL.ICE.png", src: "https://16colo.rs/pack/ice-0193/x1/IC-HELL.ICE.png" },
+    { title: "ice-0193__IC-TA.ICE.png", src: "https://16colo.rs/pack/ice-0193/x1/IC-TA.ICE.png" },
+    { title: "ice-0193__LI-BH.ICE.png", src: "https://16colo.rs/pack/ice-0193/x1/LI-BH.ICE.png" },
+    { title: "ice-0193__LI-M&M.ICE.png", src: "https://16colo.rs/pack/ice-0193/x1/LI-M%26M.ICE.png" },
+    { title: "ice-0193__MH-NARC.ICE.png", src: "https://16colo.rs/pack/ice-0193/x1/MH-NARC.ICE.png" },
+    { title: "ice-0193__MS-SANC1.ICE.png", src: "https://16colo.rs/pack/ice-0193/x1/MS-SANC1.ICE.png" },
+    { title: "ice-0193__NM-EMH.ICE.png", src: "https://16colo.rs/pack/ice-0193/x1/NM-EMH.ICE.png" },
+    { title: "ice-0193__NM-MF.ICE.png", src: "https://16colo.rs/pack/ice-0193/x1/NM-MF.ICE.png" },
+    { title: "ice-0193__QS-SS.ICE.png", src: "https://16colo.rs/pack/ice-0193/x1/QS-SS.ICE.png" },
+    { title: "ice-0193__SK-RIV.ICE.png", src: "https://16colo.rs/pack/ice-0193/x1/SK-RIV.ICE.png" },
+    { title: "ice-0193__SK-SKYN2.ICE.png", src: "https://16colo.rs/pack/ice-0193/x1/SK-SKYN2.ICE.png" },
+    { title: "ice-0193__TO-MF.ICE.png", src: "https://16colo.rs/pack/ice-0193/x1/TO-MF.ICE.png" },
+    { title: "ice-0193__TT-INC.ICE.png", src: "https://16colo.rs/pack/ice-0193/x1/TT-INC.ICE.png" },
+    { title: "ice-0193__TT-M&M.ICE.png", src: "https://16colo.rs/pack/ice-0193/x1/TT-M%26M.ICE.png" },
+    { title: "ice-0193__TT-TGWN.ICE.png", src: "https://16colo.rs/pack/ice-0193/x1/TT-TGWN.ICE.png" },
+    { title: "ice-0193__TT-VK.ICE.png", src: "https://16colo.rs/pack/ice-0193/x1/TT-VK.ICE.png" },
+    { title: "ice-0193__US-HW2.ICE.png", src: "https://16colo.rs/pack/ice-0193/x1/US-HW2.ICE.png" },
+    { title: "ice-0193__UV-WHAT.ICE.png", src: "https://16colo.rs/pack/ice-0193/x1/UV-WHAT.ICE.png" },
+    { title: "ice-0193__UV-XF.ICE.png", src: "https://16colo.rs/pack/ice-0193/x1/UV-XF.ICE.png" },
+    { title: "ice-0201a__ti-bt.ice.png", src: "https://16colo.rs/pack/ice-0201a/x1/ti-bt.ice.png" },
+    { title: "ice-0293__AA-SOC.ICE.png", src: "https://16colo.rs/pack/ice-0293/x1/AA-SOC.ICE.png" },
+    { title: "ice-0293__IC-CCI.ICE.png", src: "https://16colo.rs/pack/ice-0293/x1/IC-CCI.ICE.png" },
+    { title: "ice-0293__IC-HP.ICE.png", src: "https://16colo.rs/pack/ice-0293/x1/IC-HP.ICE.png" },
+    { title: "ice-0293__ICE-293.STS.png", src: "https://16colo.rs/pack/ice-0293/x1/ICE-293.STS.png" },
+    { title: "ice-0293__LI-ESP.ICE.png", src: "https://16colo.rs/pack/ice-0293/x1/LI-ESP.ICE.png" },
+    { title: "ice-0293__LI-TTC.ICE.png", src: "https://16colo.rs/pack/ice-0293/x1/LI-TTC.ICE.png" },
+    { title: "ice-0293__MH-THOP.ICE.png", src: "https://16colo.rs/pack/ice-0293/x1/MH-THOP.ICE.png" },
+    { title: "ice-0293__QS-CW.ICE.png", src: "https://16colo.rs/pack/ice-0293/x1/QS-CW.ICE.png" },
+    { title: "ice-0293__SK-SKY2.ICE.png", src: "https://16colo.rs/pack/ice-0293/x1/SK-SKY2.ICE.png" },
+    { title: "ice-0293__TF-ID.ICE.png", src: "https://16colo.rs/pack/ice-0293/x1/TF-ID.ICE.png" },
+    { title: "ice-0293__TF-NS.ICE.png", src: "https://16colo.rs/pack/ice-0293/x1/TF-NS.ICE.png" },
+    { title: "ice-0393__DE-TMP.ICE.png", src: "https://16colo.rs/pack/ice-0393/x1/DE-TMP.ICE.png" },
+    { title: "ice-0393__DZ-LE.ICE.png", src: "https://16colo.rs/pack/ice-0393/x1/DZ-LE.ICE.png" },
+    { title: "ice-0393__ED-PHON.ICE.png", src: "https://16colo.rs/pack/ice-0393/x1/ED-PHON.ICE.png" },
+    { title: "ice-0393__GN-BAUD.ICE.png", src: "https://16colo.rs/pack/ice-0393/x1/GN-BAUD.ICE.png" },
+    { title: "ice-0393__IC-ID.ICE.png", src: "https://16colo.rs/pack/ice-0393/x1/IC-ID.ICE.png" },
+    { title: "ice-0393__IC-THG.ICE.png", src: "https://16colo.rs/pack/ice-0393/x1/IC-THG.ICE.png" },
+    { title: "ice-0393__LI-UD.ICE.png", src: "https://16colo.rs/pack/ice-0393/x1/LI-UD.ICE.png" },
+    { title: "ice-0393__LI-XF.ICE.png", src: "https://16colo.rs/pack/ice-0393/x1/LI-XF.ICE.png" },
+    { title: "ice-0393__LP-CR2.ICE.png", src: "https://16colo.rs/pack/ice-0393/x1/LP-CR2.ICE.png" },
+    { title: "ice-0393__LP-RT.ICE.png", src: "https://16colo.rs/pack/ice-0393/x1/LP-RT.ICE.png" },
+    { title: "ice-0393__MH-PRT.ICE.png", src: "https://16colo.rs/pack/ice-0393/x1/MH-PRT.ICE.png" },
+    { title: "ice-0393__QS-EXOD.ICE.png", src: "https://16colo.rs/pack/ice-0393/x1/QS-EXOD.ICE.png" },
+    { title: "ice-0393__QS-HEMI.ICE.png", src: "https://16colo.rs/pack/ice-0393/x1/QS-HEMI.ICE.png" },
+    { title: "ice-0393__QS-HW.ICE.png", src: "https://16colo.rs/pack/ice-0393/x1/QS-HW.ICE.png" },
+    { title: "ice-0393__QS-MERC.ICE.png", src: "https://16colo.rs/pack/ice-0393/x1/QS-MERC.ICE.png" },
+    { title: "ice-0393__QS-TBC.ICE.png", src: "https://16colo.rs/pack/ice-0393/x1/QS-TBC.ICE.png" },
+    { title: "ice-0393__SK-LOZ.ICE.png", src: "https://16colo.rs/pack/ice-0393/x1/SK-LOZ.ICE.png" },
+    { title: "ice-0393__TF-PD.ICE.png", src: "https://16colo.rs/pack/ice-0393/x1/TF-PD.ICE.png" },
+    { title: "ice-0393__TF-SOS.ICE.png", src: "https://16colo.rs/pack/ice-0393/x1/TF-SOS.ICE.png" },
+    { title: "ice-0393__TT-HELL.ICE.png", src: "https://16colo.rs/pack/ice-0393/x1/TT-HELL.ICE.png" },
+    { title: "ice-0393__TT-MAL.ICE.png", src: "https://16colo.rs/pack/ice-0393/x1/TT-MAL.ICE.png" },
+    { title: "ice-0393__TT-SOD.ICE.png", src: "https://16colo.rs/pack/ice-0393/x1/TT-SOD.ICE.png" },
+    { title: "ice-0393__TT-TT.ICE.png", src: "https://16colo.rs/pack/ice-0393/x1/TT-TT.ICE.png" },
+    { title: "ice-0393__UV-NJC.ICE.png", src: "https://16colo.rs/pack/ice-0393/x1/UV-NJC.ICE.png" },
+    { title: "ice-0493__AA-M&M.ICE.png", src: "https://16colo.rs/pack/ice-0493/x1/AA-M%26M.ICE.png" },
+    { title: "ice-0493__AA-SF2.ICE.png", src: "https://16colo.rs/pack/ice-0493/x1/AA-SF2.ICE.png" },
+    { title: "ice-0493__CT-BH.ICE.png", src: "https://16colo.rs/pack/ice-0493/x1/CT-BH.ICE.png" },
+    { title: "ice-0493__CT-DARK.ICE.png", src: "https://16colo.rs/pack/ice-0493/x1/CT-DARK.ICE.png" },
+    { title: "ice-0493__ED-NSEC2.ICE.png", src: "https://16colo.rs/pack/ice-0493/x1/ED-NSEC2.ICE.png" },
+    { title: "ice-0493__GEN-BUD2.ICE.png", src: "https://16colo.rs/pack/ice-0493/x1/GEN-BUD2.ICE.png" },
+    { title: "ice-0493__GEN-LD1.ICE.png", src: "https://16colo.rs/pack/ice-0493/x1/GEN-LD1.ICE.png" },
+    { title: "ice-0493__ICE-493.STS.png", src: "https://16colo.rs/pack/ice-0493/x1/ICE-493.STS.png" },
+    { title: "ice-0493__LI-DS.ICE.png", src: "https://16colo.rs/pack/ice-0493/x1/LI-DS.ICE.png" },
+    { title: "ice-0493__LI-SKILL.ICE.png", src: "https://16colo.rs/pack/ice-0493/x1/LI-SKILL.ICE.png" },
+    { title: "ice-0493__MH-ALK.ICE.png", src: "https://16colo.rs/pack/ice-0493/x1/MH-ALK.ICE.png" },
+    { title: "ice-0493__ML-SANCT.ICE.png", src: "https://16colo.rs/pack/ice-0493/x1/ML-SANCT.ICE.png" },
+    { title: "ice-0493__QS-HS.ICE.png", src: "https://16colo.rs/pack/ice-0493/x1/QS-HS.ICE.png" },
+    { title: "ice-0493__SK-PB.ICE.png", src: "https://16colo.rs/pack/ice-0493/x1/SK-PB.ICE.png" },
+    { title: "ice-0493__SP-CLUBP.ICE.png", src: "https://16colo.rs/pack/ice-0493/x1/SP-CLUBP.ICE.png" },
+    { title: "ice-0493__SP-DCRIM.ICE.png", src: "https://16colo.rs/pack/ice-0493/x1/SP-DCRIM.ICE.png" },
+    { title: "ice-0493__TF-SL.ICE.png", src: "https://16colo.rs/pack/ice-0493/x1/TF-SL.ICE.png" },
+    { title: "ice-0493__TT-BAUD.ICE.png", src: "https://16colo.rs/pack/ice-0493/x1/TT-BAUD.ICE.png" },
+    { title: "ice-0493__TT-RIV2.ICE.png", src: "https://16colo.rs/pack/ice-0493/x1/TT-RIV2.ICE.png" },
+    { title: "ice-0493__TT-STAR.ICE.png", src: "https://16colo.rs/pack/ice-0493/x1/TT-STAR.ICE.png" },
+    { title: "ice-0493__TT-VAL.ICE.png", src: "https://16colo.rs/pack/ice-0493/x1/TT-VAL.ICE.png" },
+    { title: "ice-0493__WZ-RVNDL.ICE.png", src: "https://16colo.rs/pack/ice-0493/x1/WZ-RVNDL.ICE.png" },
+    { title: "ice-0593__CT-ICE.ICE.png", src: "https://16colo.rs/pack/ice-0593/x1/CT-ICE.ICE.png" },
+    { title: "ice-0593__DZ-PRT.ICE.png", src: "https://16colo.rs/pack/ice-0593/x1/DZ-PRT.ICE.png" },
+    { title: "ice-0593__DZ-TDU.ICE.png", src: "https://16colo.rs/pack/ice-0593/x1/DZ-TDU.ICE.png" },
+    { title: "ice-0593__GEN-POD1.ICE.png", src: "https://16colo.rs/pack/ice-0593/x1/GEN-POD1.ICE.png" },
+    { title: "ice-0593__ICE-593.STS.png", src: "https://16colo.rs/pack/ice-0593/x1/ICE-593.STS.png" },
+    { title: "ice-0593__MH-SP.ICE.png", src: "https://16colo.rs/pack/ice-0593/x1/MH-SP.ICE.png" },
+    { title: "ice-0593__NB-MO.ICE.png", src: "https://16colo.rs/pack/ice-0593/x1/NB-MO.ICE.png" },
+    { title: "ice-0593__TT-SOV.ICE.png", src: "https://16colo.rs/pack/ice-0593/x1/TT-SOV.ICE.png" },
+    { title: "ice-0593__TT-TLD.ICE.png", src: "https://16colo.rs/pack/ice-0593/x1/TT-TLD.ICE.png" },
+    { title: "ice-0593__TT-WHAT.ICE.png", src: "https://16colo.rs/pack/ice-0593/x1/TT-WHAT.ICE.png" },
+    { title: "ice-0593__WZ-PITS.ICE.png", src: "https://16colo.rs/pack/ice-0593/x1/WZ-PITS.ICE.png" },
+    { title: "ice-0593__WZ-SLNCE.ICE.png", src: "https://16colo.rs/pack/ice-0593/x1/WZ-SLNCE.ICE.png" },
+    { title: "ice-0693__AA-BYE.ICE.png", src: "https://16colo.rs/pack/ice-0693/x1/AA-BYE.ICE.png" },
+    { title: "ice-0693__CB-IOD1.ICE.png", src: "https://16colo.rs/pack/ice-0693/x1/CB-IOD1.ICE.png" },
+    { title: "ice-0693__DZ-HW.ICE.png", src: "https://16colo.rs/pack/ice-0693/x1/DZ-HW.ICE.png" },
+    { title: "ice-0693__DZ-STA.ICE.png", src: "https://16colo.rs/pack/ice-0693/x1/DZ-STA.ICE.png" },
+    { title: "ice-0693__ED-ID.ICE.png", src: "https://16colo.rs/pack/ice-0693/x1/ED-ID.ICE.png" },
+    { title: "ice-0693__FD-BS.ICE.png", src: "https://16colo.rs/pack/ice-0693/x1/FD-BS.ICE.png" },
+    { title: "ice-0693__FD-RT.ICE.png", src: "https://16colo.rs/pack/ice-0693/x1/FD-RT.ICE.png" },
+    { title: "ice-0693__FD-STA1.ICE.png", src: "https://16colo.rs/pack/ice-0693/x1/FD-STA1.ICE.png" },
   ];
 
   if (document.getElementById('wargames-ansi-stream')) return;
@@ -1665,228 +1795,7 @@ body::after {
     bodyObserver.observe(document.documentElement, { childList: true });
   }
 
-  // Phase 2: replace only Claude's small orange composer mascot with a
-  // Bit-inspired faceted indicator. The native element keeps its layout box;
-  // our overlay follows that box without touching the composer itself.
-  const bitHost = document.createElement('div');
-  bitHost.id = 'wargames-bit-mascot';
-  bitHost.setAttribute('aria-hidden', 'true');
-  bitHost.style.cssText =
-    'all:initial!important;position:fixed!important;display:none!important;' +
-    'width:44px!important;height:44px!important;pointer-events:none!important;' +
-    'z-index:32!important;';
-  const bitShadow = bitHost.attachShadow({ mode: 'closed' });
-  bitShadow.innerHTML = `
-    <style>
-      :host { color-scheme:dark; }
-      svg { display:block; width:100%; height:100%; overflow:visible;
-        filter:drop-shadow(0 0 3px #ffe66d99) drop-shadow(0 0 7px #00e5ff55); }
-      .edge { fill:none; stroke:#fff6a8; stroke-width:1; vector-effect:non-scaling-stroke; }
-      .state { transform-box:fill-box; transform-origin:center; animation:bit-tumble 5.5s linear infinite; }
-      :host([data-bit-state="yes"]) .no { display:none; }
-      :host([data-bit-state="no"]) .yes { display:none; }
-      :host([data-bit-state="no"]) svg {
-        filter:drop-shadow(0 0 3px #ff3344bb) drop-shadow(0 0 8px #cc00ff66);
-      }
-      :host([data-bit-state="no"]) .state { animation-direction:reverse; animation-duration:4.2s; }
-      @keyframes bit-tumble {
-        0%   { transform:rotate(0deg) scaleY(1); }
-        25%  { transform:rotate(90deg) scaleY(.82); }
-        50%  { transform:rotate(180deg) scaleY(1); }
-        75%  { transform:rotate(270deg) scaleY(.82); }
-        100% { transform:rotate(360deg) scaleY(1); }
-      }
-      @media (prefers-reduced-motion:reduce) { .state { animation:none; } }
-    </style>
-    <svg viewBox="0 0 44 44" role="presentation">
-      <g class="state yes">
-      <polygon points="22,2 39,11 42,29 31,41 13,41 2,29 5,11" fill="#ffd23f"/>
-      <polygon points="22,2 22,22 5,11" fill="#fff3a1"/>
-      <polygon points="22,2 39,11 22,22" fill="#ffe066"/>
-      <polygon points="39,11 42,29 22,22" fill="#e7a900"/>
-      <polygon points="42,29 31,41 22,22" fill="#ffbf00"/>
-      <polygon points="31,41 13,41 22,22" fill="#00cfe8"/>
-      <polygon points="13,41 2,29 22,22" fill="#009db8"/>
-      <polygon points="2,29 5,11 22,22" fill="#39e7ff"/>
-      <polygon class="edge" points="22,2 39,11 42,29 31,41 13,41 2,29 5,11"/>
-      <path class="edge" d="M22 2V22M39 11 22 22M42 29 22 22M31 41 22 22M13 41 22 22M2 29 22 22M5 11 22 22" opacity=".72"/>
-      </g>
-      <g class="state no">
-        <polygon points="22,1 27,10 36,4 34,14 43,12 37,21 44,26 34,29 38,40 28,35 22,44 17,35 6,40 10,29 0,26 8,21 1,13 11,14 10,4 18,10" fill="#c7002f"/>
-        <polygon points="22,1 27,10 22,22 18,10" fill="#ff5a5f"/>
-        <polygon points="36,4 34,14 22,22 27,10" fill="#d91445"/>
-        <polygon points="43,12 37,21 22,22 34,14" fill="#ff304f"/>
-        <polygon points="44,26 34,29 22,22 37,21" fill="#8e0038"/>
-        <polygon points="38,40 28,35 22,22 34,29" fill="#c00066"/>
-        <polygon points="22,44 17,35 22,22 28,35" fill="#ff1744"/>
-        <polygon points="6,40 10,29 22,22 17,35" fill="#85002e"/>
-        <polygon points="0,26 8,21 22,22 10,29" fill="#d1003f"/>
-        <polygon points="1,13 11,14 22,22 8,21" fill="#ff4055"/>
-        <polygon points="10,4 18,10 22,22 11,14" fill="#a60048"/>
-        <circle cx="22" cy="22" r="3.2" fill="#ffdfef"/>
-        <polygon class="edge" points="22,1 27,10 36,4 34,14 43,12 37,21 44,26 34,29 38,40 28,35 22,44 17,35 6,40 10,29 0,26 8,21 1,13 11,14 10,4 18,10" style="stroke:#ff8aa0"/>
-      </g>
-    </svg>`;
-  bitHost.setAttribute('data-bit-state', 'yes');
-  document.body.append(bitHost);
-
-  let nativeMascot = null;
-  let nativeMascotVisibility = '';
-  let nativeMascotPriority = '';
-  let lastMascotRect = null;
-  let bitNoUntil = 0;
-
-  function orangeChannel(value) {
-    const numbers = String(value).match(/[\d.]+/g);
-    if (!numbers || numbers.length < 3) return false;
-    const [red, green, blue] = numbers.map(Number);
-    return red >= 165 && green >= 55 && green <= 175 &&
-      blue <= 135 && red >= green + 35;
-  }
-
-  function hasOrangeInk(element) {
-    const nodes = [element, ...element.querySelectorAll('*')].slice(0, 48);
-    return nodes.some(node => {
-      const css = getComputedStyle(node);
-      return orangeChannel(css.color) || orangeChannel(css.fill) ||
-        orangeChannel(css.stroke) || orangeChannel(css.backgroundColor);
-    });
-  }
-
-  function redChannel(value) {
-    const numbers = String(value).match(/[\d.]+/g);
-    if (!numbers || numbers.length < 3) return false;
-    const [red, green, blue] = numbers.map(Number);
-    return red >= 145 && red >= green * 1.35 && red >= blue * 1.2;
-  }
-
-  function hasRedInk(element) {
-    const nodes = [element, ...element.querySelectorAll('*')].slice(0, 48);
-    return nodes.some(node => {
-      const css = getComputedStyle(node);
-      return redChannel(css.color) || redChannel(css.fill) ||
-        redChannel(css.stroke) || redChannel(css.backgroundColor) ||
-        redChannel(css.borderColor);
-    });
-  }
-
-  function visibleFailureSignal() {
-    const candidates = document.querySelectorAll(
-      '[role="alert"], [aria-live="assertive"], [data-type="error"], ' +
-      '[data-state="error"], [class*="error" i], [class*="destructive" i]'
-    );
-    return [...candidates].some(element => {
-      if (element.closest('#wargames-ansi-stream, #wargames-bit-mascot')) return false;
-      const rect = element.getBoundingClientRect();
-      if (!rect.width || !rect.height || rect.bottom < 0 || rect.top > innerHeight) return false;
-      const css = getComputedStyle(element);
-      if (css.display === 'none' || css.visibility === 'hidden' || Number(css.opacity) === 0) return false;
-      const signature = [
-        element.getAttribute('aria-label'), element.getAttribute('data-type'),
-        element.getAttribute('data-state'), element.className
-      ].join(' ');
-      return /error|failed|failure|danger|destructive/i.test(signature) || hasRedInk(element);
-    });
-  }
-
-  function updateBitState() {
-    if (visibleFailureSignal()) bitNoUntil = Date.now() + 5000;
-    const noState = Date.now() < bitNoUntil;
-    bitHost.setAttribute('data-bit-state', noState ? 'no' : 'yes');
-    return noState;
-  }
-
-  function restoreNativeMascot() {
-    if (!nativeMascot?.isConnected) {
-      nativeMascot = null;
-      return;
-    }
-    nativeMascot.style.setProperty(
-      'visibility', nativeMascotVisibility, nativeMascotPriority
-    );
-    nativeMascot.removeAttribute('data-wargames-native-mascot');
-    nativeMascot = null;
-  }
-
-  function hideBitMascot() {
-    bitHost.style.setProperty('display', 'none', 'important');
-  }
-
-  function placeBitMascot(rect) {
-    const size = Math.max(30, Math.min(44, Math.round(Math.max(rect.width, rect.height) * 1.35)));
-    bitHost.style.setProperty('width', `${size}px`, 'important');
-    bitHost.style.setProperty('height', `${size}px`, 'important');
-    bitHost.style.setProperty('left', `${Math.round(rect.left + rect.width / 2 - size / 2)}px`, 'important');
-    bitHost.style.setProperty('top', `${Math.round(rect.top + rect.height / 2 - size / 2 + 24)}px`, 'important');
-    bitHost.style.setProperty('display', 'block', 'important');
-    lastMascotRect = {
-      left: rect.left, top: rect.top, width: rect.width, height: rect.height
-    };
-  }
-
-  function syncBitMascot(editor, codeRoute) {
-    if (!codeRoute || !editor) {
-      restoreNativeMascot();
-      hideBitMascot();
-      lastMascotRect = null;
-      bitNoUntil = 0;
-      return;
-    }
-
-    const noState = updateBitState();
-
-    const editorRect = editor.getBoundingClientRect();
-    const inMascotZone = rect => rect.width >= 14 && rect.width <= 100 &&
-      rect.height >= 14 && rect.height <= 100 &&
-      rect.left >= editorRect.left - 24 &&
-      rect.right <= editorRect.right + 24 &&
-      rect.top >= editorRect.top - 150 && rect.bottom <= editorRect.top + 14;
-
-    if (nativeMascot?.isConnected) {
-      const rect = nativeMascot.getBoundingClientRect();
-      if (inMascotZone(rect)) {
-        placeBitMascot(rect);
-        return;
-      }
-      restoreNativeMascot();
-    }
-
-    const graphics = document.querySelectorAll(
-      'main svg, main img, main canvas, main [role="img"], ' +
-      'main [data-testid*="mascot" i], main [class*="mascot" i]'
-    );
-    const matches = [...graphics].filter(element => {
-      if (editor.contains(element) || element.closest('#wargames-ansi-stream')) return false;
-      const rect = element.getBoundingClientRect();
-      return inMascotZone(rect) && hasOrangeInk(element);
-    });
-    if (!matches.length) {
-      if (noState && lastMascotRect) placeBitMascot(lastMascotRect);
-      else hideBitMascot();
-      return;
-    }
-
-    // Claude uses more than one orange activity treatment. The live one is the
-    // lowest matching glyph immediately above the composer.
-    matches.sort((a, b) => {
-      const ar = a.getBoundingClientRect();
-      const br = b.getBoundingClientRect();
-      return Math.abs(editorRect.top - ar.bottom) - Math.abs(editorRect.top - br.bottom);
-    });
-    let target = matches[0];
-    for (let parent = target.parentElement; parent && parent !== document.body; parent = parent.parentElement) {
-      const rect = parent.getBoundingClientRect();
-      if (!inMascotZone(rect)) break;
-      target = parent;
-    }
-
-    nativeMascot = target;
-    nativeMascotVisibility = target.style.getPropertyValue('visibility');
-    nativeMascotPriority = target.style.getPropertyPriority('visibility');
-    target.setAttribute('data-wargames-native-mascot', 'true');
-    target.style.setProperty('visibility', 'hidden', 'important');
-    placeBitMascot(target.getBoundingClientRect());
-  }
+  // Bit is retired; leave Claude's native mascot untouched.
 
   let animation = null;
   let cycleHeight = 0;
@@ -2158,7 +2067,6 @@ body::after {
     // Claude can replace its body subtree during session/navigation updates.
     // Remount our persistent UI if that React refresh detached either host.
     if (document.body && !host.isConnected) document.body.append(host);
-    if (document.body && !bitHost.isConnected) document.body.append(bitHost);
     crtOverlay.style.setProperty('display', codeRoute ? 'block' : 'none', 'important');
     if (codeRoute) markClaudeWordmark();
     const feedLeft = innerWidth - WIDTH - MARGIN;
@@ -2167,7 +2075,6 @@ body::after {
     const lower = innerHeight - BOTTOM;
     const editor = document.querySelector('[data-cds="ChatComposerEditor"]');
     syncPromptChevron(editor);
-    syncBitMascot(editor, codeRoute);
     if (codeRoute && editor) widenConversation(editor, conversationRight);
     // The feed owns its reserved gutter for the entire Code route. Do not tie
     // visibility to Claude's transient composer/message geometry: React can
@@ -2366,3 +2273,4 @@ body::after {
   checkSpace();
   loadSelection();
 })();
+
