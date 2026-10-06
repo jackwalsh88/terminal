@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.10.6
+// @version      3.10.7
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -382,29 +382,31 @@ main::before {
   user-select: none;
 }
 
-[data-composer-placeholder] {
-  padding-left: 0 !important;
-  box-sizing: border-box !important;
-}
-
-/* Chrome paints Claude's placeholder beneath the live caret. Claude has used
-   both generated pseudo-text and a separate text overlay, so cover both. */
-[data-cds="ChatComposerEditor"]:focus-within [data-composer-placeholder],
-[data-cds="ChatComposerEditor"]:focus-within [data-wargames-placeholder-overlay="true"] {
+/* Claude's hint can be an absolute sibling or generated pseudo-content.
+   Suppress the hint while the theme is active; keep the editable node intact. */
+main [data-composer-placeholder],
+[data-wargames-placeholder-overlay="true"] {
   opacity: 0 !important;
   pointer-events: none !important;
 }
 
-[data-cds="ChatComposerEditor"]:focus-within [data-placeholder]::before,
-[data-cds="ChatComposerEditor"]:focus-within [contenteditable="true"]::before,
-[data-cds="ChatComposerEditor"]:focus-within
-  [contenteditable="true"] > :first-child::before {
+[data-cds="ChatComposerEditor"][data-placeholder]::before,
+[data-cds="ChatComposerEditor"] [data-placeholder]::before,
+[data-cds="ChatComposerEditor"] [data-placeholder]::after,
+[data-cds="ChatComposerEditor"] .is-empty::before,
+[data-cds="ChatComposerEditor"] [contenteditable="true"]::before {
   content: "" !important;
   opacity: 0 !important;
 }
 
-[data-cds="ChatComposerEditor"]:focus-within input::placeholder,
-[data-cds="ChatComposerEditor"]:focus-within textarea::placeholder {
+/* The prompt itself uses ::before when the editor is also contenteditable. */
+[data-cds="ChatComposerEditor"][contenteditable="true"]::before {
+  content: ">" !important;
+  opacity: 1 !important;
+}
+
+[data-cds="ChatComposerEditor"] input::placeholder,
+[data-cds="ChatComposerEditor"] textarea::placeholder {
   color: transparent !important;
   opacity: 0 !important;
 }
@@ -2030,23 +2032,19 @@ body::after {
 
   function syncPromptChevron(editor) {
     if (!editor) return;
-    const input = editor.querySelector(
+    const input = editor.matches('[contenteditable="true"]') ? editor : editor.querySelector(
       '[contenteditable="true"][data-testid="code-prompt-input"], [contenteditable="true"]'
     );
     if (!input) return;
-    // Claude sometimes renders the faded prompt as a separate overlay rather
-    // than a CSS pseudo-element. Mark the innermost matching overlay so the
-    // focus rule above can suppress it without hiding the real editor/caret.
-    const placeholderText = 'Type / for commands';
-    const placeholderCandidates = [...editor.querySelectorAll('*')].filter(element =>
-      element !== input &&
-      !element.contains(input) &&
-      element.textContent.trim() === placeholderText
-    );
-    const placeholderOverlay = placeholderCandidates.find(element => !element.children.length) ||
-      placeholderCandidates.at(-1);
-    if (placeholderOverlay) {
-      placeholderOverlay.setAttribute('data-wargames-placeholder-overlay', 'true');
+    // New Claude versions render the hint beside the editor rather than inside it.
+    // Never hide user-authored content, including text identical to the hint.
+    const placeholderScope = editor.parentElement || editor;
+    for (const element of placeholderScope.querySelectorAll('*')) {
+      if (element === input || element.contains(input) || input.contains(element) ||
+          element.closest('[contenteditable="true"], button, a, [role="button"]')) continue;
+      if (/^type\\s*\/\\s*for commands$/i.test(element.textContent.trim())) {
+        element.setAttribute('data-wargames-placeholder-overlay', 'true');
+      }
     }
     // Remove the v3.6.4-v3.6.6 real child if this tab retained one during an
     // extension update. Pseudo-content cannot enter or overlap editable text.
