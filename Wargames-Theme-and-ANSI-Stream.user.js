@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.10.5
+// @version      3.10.6
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -357,7 +357,9 @@ main::before {
 /* 5. Apple II-style cyan prompt with localized glow. */
 [data-cds="ChatComposerEditor"] {
   position: relative !important;
-  padding-left: 0 !important;
+  /* Reserve the prompt lane for both the editable caret and placeholder. */
+  padding-left: 1.25em !important;
+  box-sizing: border-box !important;
 }
 
 [data-cds="ChatComposerEditor"]::before {
@@ -381,7 +383,7 @@ main::before {
 }
 
 [data-composer-placeholder] {
-  padding-left: 1.25em !important;
+  padding-left: 0 !important;
   box-sizing: border-box !important;
 }
 
