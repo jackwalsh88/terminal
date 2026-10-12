@@ -1,8 +1,8 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.11.0
-// @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C.
+// @version      3.11.1
+// @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C; picker: Option/Alt+Shift+P.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
 // @downloadURL  https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -2431,7 +2431,7 @@ body::after {
         .dim{opacity:.6}
       </style><div class="p"></div>`;
       const p = root.querySelector('.p');
-      p.insertAdjacentHTML('beforeend', '<b>WARGAMES COLORS</b> <span class="dim">⌥/Alt+Shift+C</span><h3>THEME</h3>');
+      p.insertAdjacentHTML('beforeend', '<b>WARGAMES COLORS</b> <span class="dim">⌥/Alt+Shift+C · pick ⌥/Alt+Shift+P</span><h3>THEME</h3>');
       THEME_VARS.forEach(t => {
         const cur = state.theme[t.v] || t.def;
         const row = document.createElement('div');
@@ -2493,6 +2493,8 @@ body::after {
     }
     document.addEventListener('keydown', e => {
       if (e.altKey && e.shiftKey && e.code === 'KeyC') { e.preventDefault(); toggle(); }
+      // Option/Alt+Shift+P: jump straight into the box picker.
+      if (e.altKey && e.shiftKey && e.code === 'KeyP') { e.preventDefault(); render(); startPick(); }
     }, true);
     if (typeof GM_registerMenuCommand === 'function') {
       GM_registerMenuCommand('Wargames colours panel', () => { render(); host.style.display = 'block'; });
