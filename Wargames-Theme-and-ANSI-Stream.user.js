@@ -1,14 +1,17 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.10.7
-// @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved.
+// @version      3.11.0
+// @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
 // @downloadURL  https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
 // @run-at       document-start
 // @noframes
 // @grant        GM_xmlhttpRequest
+// @grant        GM_getValue
+// @grant        GM_setValue
+// @grant        GM_registerMenuCommand
 // @connect      16colo.rs
 // ==/UserScript==
 
@@ -39,6 +42,11 @@
 */
 
 :root {
+  /* Fenced code-block colors: edit these three values. */
+  --cb-bg: #020b07;
+  --cb-text: #50e7ff;
+  --cb-border: #145938;
+
   --ansi-bg: #020805;
   --ansi-panel: #04140e;
   --ansi-text: #50e7ff;
@@ -215,9 +223,26 @@ main :is(.prose, .font-claude-message, .cds-user-message-body) a {
   text-underline-offset: 3px;
 }
 
-main pre {
-  background: #020b07 !important;
-  border: 1px solid var(--ansi-border) !important;
+/* Fenced blocks only; the inline-code rule below remains unchanged.
+   Repeated :root increases specificity over Claude's syntax/theme rules. */
+:root:root main div:has(> pre),
+:root:root main pre,
+:root:root main pre > code {
+  background: var(--cb-bg) !important;
+  color: var(--cb-text) !important;
+  -webkit-text-fill-color: var(--cb-text) !important;
+  border-color: var(--cb-border) !important;
+}
+
+/* Override explicit token colors, including nested syntax-highlight spans. */
+:root:root main pre * {
+  color: var(--cb-text) !important;
+  -webkit-text-fill-color: var(--cb-text) !important;
+  background: transparent !important;
+}
+
+:root:root main pre {
+  border: 1px solid var(--cb-border) !important;
   border-radius: 2px !important;
   box-shadow:
     inset 0 0 8px #00ff960a,
@@ -2272,5 +2297,207 @@ body::after {
   // Paint the frame before beginning any network request.
   checkSpace();
   loadSelection();
+
+  // ===================================================================
+  // COLORS PANEL (3.11.0) — Option/Alt+Shift+C, or the Violentmonkey menu.
+  // Theme colours edit this skin's own CSS variables (no competing rules).
+  // Picked boxes recolour any element you click, above Claude's and the skin's rules.
+  // ===================================================================
+  (() => {
+    const STORE = 'wargamesColors';
+    const THEME_VARS = [
+      { v: '--cb-bg', label: 'Code block background', def: '#020b07' },
+      { v: '--cb-text', label: 'Code block text', def: '#50e7ff' },
+      { v: '--cb-border', label: 'Code block border', def: '#145938' },
+      { v: '--ansi-text', label: "Claude's text", def: '#50e7ff' },
+      { v: '--ansi-user', label: 'Your messages', def: '#8fffab' },
+      { v: '--ansi-amber', label: 'Inline code', def: '#cc88ff' },
+      { v: '--ansi-cyan', label: 'Links and headings', def: '#00e5ff' },
+      { v: '--ansi-muted', label: 'Muted text', def: '#80b59a' },
+      { v: '--ansi-border', label: 'Borders', def: '#145938' },
+      { v: '--ansi-bg', label: 'Page background', def: '#020805' },
+    ];
+
+    const blank = () => ({ theme: {}, boxes: [] });
+    let state = blank();
+    try {
+      const saved = JSON.parse(GM_getValue(STORE, ''));
+      if (saved && typeof saved === 'object') state = { theme: saved.theme || {}, boxes: saved.boxes || [] };
+    } catch (e) { /* first run */ }
+
+    const overrides = document.createElement('style');
+    overrides.id = 'wargames-colors-css';
+    // Three ID-levels of weight without matching anything extra.
+    const BOOST = 'html:not(#wg-a):not(#wg-b):not(#wg-c) ';
+    const boost = sel => String(sel).split(',').map(s => s.trim()).filter(Boolean).map(s => BOOST + s);
+
+    function apply() {
+      const css = [];
+      const vars = Object.entries(state.theme).filter(([, val]) => val);
+      if (vars.length) css.push(':root:root:root{' + vars.map(([k, val]) => `${k}:${val}!important;`).join('') + '}');
+      state.boxes.filter(b => b.on && b.selector).forEach(b => {
+        const fg = `color:${b.fg}!important;-webkit-text-fill-color:${b.fg}!important;`;
+        css.push(boost(b.selector).join(',') + `{background:${b.bg}!important;background-color:${b.bg}!important;${fg}` +
+          (b.border ? `border:1px solid ${b.border}!important;` : '') + '}');
+        if (b.deep) css.push(boost(b.selector).map(s => s + ' *').join(',') + `{${fg}}`);
+      });
+      overrides.textContent = css.join('\n');
+      if (overrides.parentNode !== document.documentElement || overrides.nextSibling) {
+        document.documentElement.appendChild(overrides);
+      }
+    }
+    function save() { GM_setValue(STORE, JSON.stringify(state)); apply(); }
+    apply();
+    // Keep the override sheet last if the page or the skin appends styles later.
+    new MutationObserver(() => { if (overrides.nextSibling) document.documentElement.appendChild(overrides); })
+      .observe(document.documentElement, { childList: true });
+
+    // ---------- picker ----------
+    function selectorFor(el) {
+      const parts = [];
+      let node = el;
+      for (let depth = 0; node && node.nodeType === 1 && depth < 3; depth++) {
+        let part = node.tagName.toLowerCase();
+        const cls = [...node.classList].filter(c => !/^(hover|focus|group|peer)/.test(c)).slice(0, 3);
+        if (cls.length) part += cls.map(c => '.' + CSS.escape(c)).join('');
+        if (node.dataset && node.dataset.testid) part += `[data-testid="${node.dataset.testid}"]`;
+        parts.unshift(part);
+        if (cls.length >= 2 || (node.dataset && node.dataset.testid)) break;
+        node = node.parentElement;
+      }
+      return parts.join(' > ');
+    }
+    function toHex(rgb) {
+      const m = rgb && rgb.match(/\d+(\.\d+)?/g);
+      if (!m || (m[3] !== undefined && +m[3] === 0)) return '';
+      return '#' + m.slice(0, 3).map(n => (+n).toString(16).padStart(2, '0')).join('');
+    }
+    const outline = document.createElement('div');
+    Object.assign(outline.style, { position: 'fixed', pointerEvents: 'none', zIndex: 2147483646,
+      border: '2px dashed #39ff14', display: 'none' });
+    let host = null;
+    function onMove(e) {
+      const r = e.target.getBoundingClientRect();
+      Object.assign(outline.style, { display: 'block', left: r.left + 'px', top: r.top + 'px', width: r.width + 'px', height: r.height + 'px' });
+    }
+    function onPick(e) {
+      e.preventDefault(); e.stopPropagation();
+      const cs = getComputedStyle(e.target);
+      state.boxes.push({ name: 'Picked box ' + (state.boxes.length + 1), selector: selectorFor(e.target),
+        bg: toHex(cs.backgroundColor) || '#1a1a1a', fg: toHex(cs.color) || '#ffffff', border: '', on: true, deep: true });
+      stopPick(); save(); render();
+    }
+    function onEsc(e) { if (e.key === 'Escape') stopPick(); }
+    function startPick() {
+      if (!outline.isConnected) document.documentElement.appendChild(outline);
+      host.style.display = 'none';
+      document.addEventListener('mousemove', onMove, true);
+      document.addEventListener('click', onPick, true);
+      document.addEventListener('keydown', onEsc, true);
+    }
+    function stopPick() {
+      outline.style.display = 'none'; host.style.display = 'block';
+      document.removeEventListener('mousemove', onMove, true);
+      document.removeEventListener('click', onPick, true);
+      document.removeEventListener('keydown', onEsc, true);
+    }
+
+    // ---------- panel (in its own shadow root, so the skin can't restyle it) ----------
+    let root = null;
+    function ensurePanel() {
+      if (host) return;
+      host = document.createElement('div');
+      host.id = 'wargames-colors-panel';
+      Object.assign(host.style, { position: 'fixed', right: '16px', bottom: '16px', zIndex: 2147483647, display: 'none' });
+      root = host.attachShadow({ mode: 'open' });
+      document.documentElement.appendChild(host);
+    }
+    const esc = s => String(s == null ? '' : s).replace(/[&"<>]/g, c => ({ '&': '&amp;', '"': '&quot;', '<': '&lt;', '>': '&gt;' }[c]));
+
+    function render() {
+      ensurePanel();
+      root.innerHTML = `<style>
+        .p{width:380px;max-height:75vh;overflow:auto;background:#020805;color:#8fffab;font:12px "Departure Mono",ui-monospace,monospace;
+           border:1px solid #39ff14;padding:10px;box-shadow:0 0 12px #39ff1455}
+        h3{margin:10px 0 4px;font-size:12px;color:#00e5ff;font-weight:500}
+        .row{display:flex;align-items:center;gap:6px;margin:3px 0}
+        .row span{flex:1}
+        .box{border-top:1px solid #145938;margin-top:8px;padding-top:6px}
+        input[type=text]{width:100%;box-sizing:border-box;background:#000;color:#8fffab;border:1px solid #145938;font:inherit}
+        input[type=color]{width:34px;height:20px;padding:0;border:1px solid #145938;background:#000}
+        button{background:#04140e;color:#8fffab;border:1px solid #145938;font:inherit;cursor:pointer;padding:2px 6px}
+        button:hover{border-color:#39ff14}
+        .bar{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+        .dim{opacity:.6}
+      </style><div class="p"></div>`;
+      const p = root.querySelector('.p');
+      p.insertAdjacentHTML('beforeend', '<b>WARGAMES COLORS</b> <span class="dim">⌥/Alt+Shift+C</span><h3>THEME</h3>');
+      THEME_VARS.forEach(t => {
+        const cur = state.theme[t.v] || t.def;
+        const row = document.createElement('div');
+        row.className = 'row';
+        row.innerHTML = `<span>${esc(t.label)}${state.theme[t.v] ? '' : ' <span class="dim">(skin)</span>'}</span>
+          <input type="color" value="${esc(cur)}"><button title="back to the skin's colour">↺</button>`;
+        row.querySelector('input').addEventListener('input', e => { state.theme[t.v] = e.target.value; save(); });
+        row.querySelector('input').addEventListener('change', render);
+        row.querySelector('button').onclick = () => { delete state.theme[t.v]; save(); render(); };
+        p.appendChild(row);
+      });
+      p.insertAdjacentHTML('beforeend', '<h3>PICKED BOXES</h3>' + (state.boxes.length ? '' : '<div class="dim">none yet — use ⌖ pick a box</div>'));
+      state.boxes.forEach((b, i) => {
+        const d = document.createElement('div');
+        d.className = 'box';
+        d.innerHTML = `
+          <div class="row"><input type="checkbox" data-k="on" ${b.on ? 'checked' : ''}><input type="text" data-k="name" value="${esc(b.name)}"></div>
+          <input type="text" data-k="selector" value="${esc(b.selector)}" class="dim">
+          <div class="row">bg <input type="color" data-k="bg" value="${esc(b.bg || '#000000')}">
+            text <input type="color" data-k="fg" value="${esc(b.fg || '#ffffff')}">
+            border <input type="color" data-k="border" value="${esc(b.border || '#000000')}">
+            <button data-a="nob">no border</button><button data-a="del">✕</button></div>
+          <div class="row"><input type="checkbox" data-k="deep" ${b.deep ? 'checked' : ''}><span>text inside too</span></div>`;
+        d.querySelectorAll('[data-k]').forEach(inp => inp.addEventListener('input', () => {
+          b[inp.dataset.k] = inp.type === 'checkbox' ? inp.checked : inp.value; save();
+        }));
+        d.querySelector('[data-a=nob]').onclick = () => { b.border = ''; save(); render(); };
+        d.querySelector('[data-a=del]').onclick = () => { state.boxes.splice(i, 1); save(); render(); };
+        p.appendChild(d);
+      });
+      const bar = document.createElement('div');
+      bar.className = 'bar';
+      bar.innerHTML = '<button data-a="pick">⌖ pick a box</button><button data-a="exp">export</button>' +
+        '<button data-a="imp">import</button><button data-a="reset">reset all</button><button data-a="close">close</button>';
+      bar.querySelector('[data-a=pick]').onclick = startPick;
+      bar.querySelector('[data-a=exp]').onclick = async () => {
+        const json = JSON.stringify(state);
+        try { await navigator.clipboard.writeText(json); alert('Colours copied to the clipboard.'); }
+        catch (e) { prompt('Copy your colours:', json); }
+      };
+      bar.querySelector('[data-a=imp]').onclick = () => {
+        const txt = prompt('Paste exported colours:');
+        if (!txt) return;
+        try {
+          const s = JSON.parse(txt);
+          state = { theme: s.theme || {}, boxes: s.boxes || [] };
+          save(); render();
+        } catch (e) { alert('That text is not an export from this panel.'); }
+      };
+      bar.querySelector('[data-a=reset]').onclick = () => {
+        if (confirm('Back to the skin\'s colours and remove all picked boxes?')) { state = blank(); save(); render(); }
+      };
+      bar.querySelector('[data-a=close]').onclick = () => { host.style.display = 'none'; };
+      p.appendChild(bar);
+    }
+    function toggle() {
+      render();
+      host.style.display = host.style.display === 'none' ? 'block' : 'none';
+    }
+    document.addEventListener('keydown', e => {
+      if (e.altKey && e.shiftKey && e.code === 'KeyC') { e.preventDefault(); toggle(); }
+    }, true);
+    if (typeof GM_registerMenuCommand === 'function') {
+      GM_registerMenuCommand('Wargames colours panel', () => { render(); host.style.display = 'block'; });
+    }
+  })();
 })();
+
 
