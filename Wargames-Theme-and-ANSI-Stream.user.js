@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.11.8
+// @version      3.11.9
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C; picker: Option/Alt+Shift+P.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -2322,7 +2322,7 @@ body::after {
     let railPresent = false;
     if (codeRoute) {
       const rail = [...document.querySelectorAll('div[class*="session-rail-w"]')]
-        .find(node => getComputedStyle(node).position === 'absolute');
+        .find(node => ['absolute', 'fixed'].includes(getComputedStyle(node).position));
       const railRect = rail?.getBoundingClientRect();
       if (railRect && railRect.width > 0 && railRect.left > innerWidth * .45) {
         conversationRight = Math.min(conversationRight, Math.floor(railRect.left));
