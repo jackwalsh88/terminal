@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.11.2
+// @version      3.11.3
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C; picker: Option/Alt+Shift+P.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -2128,6 +2128,30 @@ body::after {
         if (rect.left < drawerLeft) {
           drawer = node;
           drawerLeft = Math.floor(rect.left);
+        }
+      }
+    }
+
+    // Any other panel docked on the right (e.g. Environment / Remote Control / Context, added
+    // to Claude Code in Oct 2026) has no "Plan" label. Probe what sits under the art column
+    // and treat a full-height, right-docked block as a drawer too.
+    if (!drawer) {
+      for (const y of [innerHeight * .35, innerHeight * .6]) {
+        for (const element of document.elementsFromPoint(innerWidth - 24, y)) {
+          if (element === host || host.contains(element)) continue;
+          for (let node = element; node && node !== document.body && node !== document.documentElement; node = node.parentElement) {
+            const rect = node.getBoundingClientRect();
+            const docked =
+              rect.left > innerWidth * .45 &&
+              rect.top <= 120 &&
+              rect.bottom >= innerHeight * .75 &&
+              rect.width >= 200 &&
+              rect.width <= 720 &&
+              rect.right >= innerWidth - 8;
+            if (!docked) continue;
+            if (rect.left < drawerLeft) { drawer = node; drawerLeft = Math.floor(rect.left); }
+            break;
+          }
         }
       }
     }
