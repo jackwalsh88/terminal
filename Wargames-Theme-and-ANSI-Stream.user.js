@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.11.3
+// @version      3.11.4
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C; picker: Option/Alt+Shift+P.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -2103,6 +2103,32 @@ body::after {
     if (wordmark) wordmark.setAttribute('data-wargames-brand', 'true');
   }
 
+  // Claude Code's right side panel (Environment / Remote Control / Context, Oct 2026) has no
+  // "Plan" label. Probe the right edge and return the left edge of a full-height, right-docked
+  // block, or null. The feed then sits to the LEFT of that panel instead of on top of it.
+  function findSidePanelLeft() {
+    let best = null;
+    for (const y of [innerHeight * .35, innerHeight * .6]) {
+      for (const element of document.elementsFromPoint(innerWidth - 24, y)) {
+        if (element === host || host.contains(element)) continue;
+        for (let node = element; node && node !== document.body && node !== document.documentElement; node = node.parentElement) {
+          const rect = node.getBoundingClientRect();
+          const docked =
+            rect.left > innerWidth * .55 &&
+            rect.top <= 120 &&
+            rect.bottom >= innerHeight * .75 &&
+            rect.width >= 200 &&
+            rect.width <= 600 &&
+            rect.right >= innerWidth - 8;
+          if (!docked) continue;
+          if (best === null || rect.left < best) best = Math.floor(rect.left);
+          break;
+        }
+      }
+    }
+    return best;
+  }
+
   function findPlanDrawerLeft(fallbackRight) {
     let drawer = null;
     let drawerLeft = fallbackRight;
@@ -2128,30 +2154,6 @@ body::after {
         if (rect.left < drawerLeft) {
           drawer = node;
           drawerLeft = Math.floor(rect.left);
-        }
-      }
-    }
-
-    // Any other panel docked on the right (e.g. Environment / Remote Control / Context, added
-    // to Claude Code in Oct 2026) has no "Plan" label. Probe what sits under the art column
-    // and treat a full-height, right-docked block as a drawer too.
-    if (!drawer) {
-      for (const y of [innerHeight * .35, innerHeight * .6]) {
-        for (const element of document.elementsFromPoint(innerWidth - 24, y)) {
-          if (element === host || host.contains(element)) continue;
-          for (let node = element; node && node !== document.body && node !== document.documentElement; node = node.parentElement) {
-            const rect = node.getBoundingClientRect();
-            const docked =
-              rect.left > innerWidth * .45 &&
-              rect.top <= 120 &&
-              rect.bottom >= innerHeight * .75 &&
-              rect.width >= 200 &&
-              rect.width <= 720 &&
-              rect.right >= innerWidth - 8;
-            if (!docked) continue;
-            if (rect.left < drawerLeft) { drawer = node; drawerLeft = Math.floor(rect.left); }
-            break;
-          }
         }
       }
     }
@@ -2321,7 +2323,9 @@ body::after {
     if (document.body && !host.isConnected) document.body.append(host);
     crtOverlay.style.setProperty('display', codeRoute ? 'block' : 'none', 'important');
     if (codeRoute) markClaudeWordmark();
-    const feedLeft = innerWidth - WIDTH - MARGIN;
+    const sideLeft = codeRoute ? findSidePanelLeft() : null;
+    const sideOffset = sideLeft === null ? 0 : innerWidth - sideLeft;
+    const feedLeft = innerWidth - sideOffset - WIDTH - MARGIN;
     const conversationRight = codeRoute ? findPlanDrawerLeft(feedLeft) : feedLeft;
     const planOpen = document.documentElement.hasAttribute('data-wargames-plan-open');
     const lower = innerHeight - BOTTOM;
@@ -2332,9 +2336,9 @@ body::after {
     // visibility to Claude's transient composer/message geometry: React can
     // briefly remove or resize those nodes while loading, which made the panel
     // arrive late and flash off during otherwise normal layout updates.
-    const allowed = codeRoute && !planOpen && innerWidth >= 1100 && innerHeight >= 500;
+    const allowed = codeRoute && !planOpen && innerWidth - sideOffset >= 1100 && innerHeight >= 500;
     host.style.setProperty('width', `${WIDTH}px`, 'important');
-    host.style.setProperty('right', `${MARGIN}px`, 'important');
+    host.style.setProperty('right', `${sideOffset + MARGIN}px`, 'important');
     host.style.setProperty('top', `${TOP}px`, 'important');
     host.style.setProperty('height', `${Math.max(0, lower - TOP)}px`, 'important');
     host.style.setProperty('display', allowed ? 'block' : 'none', 'important');
