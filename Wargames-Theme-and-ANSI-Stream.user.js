@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.11.7
+// @version      3.11.8
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C; picker: Option/Alt+Shift+P.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -464,6 +464,18 @@ main code:not(pre code) {
    Its offset from the right edge and the chat padding both derive from --session-rail-end,
    so one override moves the panel, the conversation and the composer inward together,
    leaving the feed's column free. 192px = feed WIDTH 160 + MARGIN 16 on both sides. */
+/* While the feed is shown: keep the WOPR label clear of the toolbar icons, and line the side
+   panel up with the feed: same top (44px) and bottom (24px) as the ANSI column. */
+html[data-wargames-feed-shown] main::before {
+  right: 310px;
+}
+html[data-wargames-feed-shown] div.absolute[class*="w-[var(--session-rail-w"] {
+  position: fixed !important;
+  top: 44px !important;
+  bottom: 24px !important;
+  padding-top: 0 !important;
+  padding-bottom: 0 !important;
+}
 html[data-wargames-feed-shown] [class*="session-rail"] {
   --session-rail-end: calc(0.5rem - 1px + 192px) !important;
 }
