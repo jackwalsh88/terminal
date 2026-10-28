@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.11.9
+// @version      3.11.10
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C; picker: Option/Alt+Shift+P.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -469,6 +469,15 @@ main code:not(pre code) {
 html[data-wargames-feed-shown] main::before {
   right: 310px;
 }
+html[data-wargames-rail-open] main::before {
+  left: var(--wargames-wopr-left, auto);
+  right: auto;
+}
+html[data-wargames-feed-shown] div.absolute[class*="w-[var(--session-rail-w"] > aside {
+  background: #000 !important;
+  border: 1px solid var(--ansi-border) !important;
+  border-radius: 0 !important;
+}
 html[data-wargames-feed-shown] div.absolute[class*="w-[var(--session-rail-w"] {
   position: fixed !important;
   top: 44px !important;
@@ -477,7 +486,7 @@ html[data-wargames-feed-shown] div.absolute[class*="w-[var(--session-rail-w"] {
   padding-bottom: 0 !important;
 }
 html[data-wargames-feed-shown] [class*="session-rail"] {
-  --session-rail-end: calc(0.5rem - 1px + 192px) !important;
+  --session-rail-end: 192px !important;
 }
 
 main hr {
@@ -2327,6 +2336,7 @@ body::after {
       if (railRect && railRect.width > 0 && railRect.left > innerWidth * .45) {
         conversationRight = Math.min(conversationRight, Math.floor(railRect.left));
         railPresent = true;
+        document.documentElement.style.setProperty('--wargames-wopr-left', `${Math.floor(railRect.left) + 1}px`);
       }
     }
     const planOpen = document.documentElement.hasAttribute('data-wargames-plan-open');
@@ -2355,6 +2365,7 @@ body::after {
     host.style.setProperty('height', `${Math.max(0, lower - TOP)}px`, 'important');
     host.style.setProperty('display', allowed ? 'block' : 'none', 'important');
     document.documentElement.toggleAttribute('data-wargames-feed-shown', allowed);
+    document.documentElement.toggleAttribute('data-wargames-rail-open', allowed && railPresent);
     const wasShown = shown;
     shown = allowed;
     if (shown && !wasShown) rebuild();
