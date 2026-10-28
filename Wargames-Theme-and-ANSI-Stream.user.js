@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.11.5
+// @version      3.11.6
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C; picker: Option/Alt+Shift+P.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -458,6 +458,14 @@ main code:not(pre code) {
   border: 1px solid color-mix(in srgb, var(--ansi-amber) 30%, transparent) !important;
   border-radius: 0 !important;
   padding: 1px 7px !important;
+}
+
+/* Claude Code's right side panel ("session rail": Environment / Remote Control / Context).
+   Its offset from the right edge and the chat padding both derive from --session-rail-end,
+   so one override moves the panel, the conversation and the composer inward together,
+   leaving the feed's column free. 192px = feed WIDTH 160 + MARGIN 16 on both sides. */
+html[data-wargames-feed-shown] [class*="session-rail"] {
+  --session-rail-end: calc(0.5rem - 1px + 192px) !important;
 }
 
 main hr {
@@ -2298,7 +2306,15 @@ body::after {
     crtOverlay.style.setProperty('display', codeRoute ? 'block' : 'none', 'important');
     if (codeRoute) markClaudeWordmark();
     const feedLeft = innerWidth - WIDTH - MARGIN;
-    const conversationRight = codeRoute ? findPlanDrawerLeft(feedLeft) : feedLeft;
+    let conversationRight = codeRoute ? findPlanDrawerLeft(feedLeft) : feedLeft;
+    if (codeRoute) {
+      const rail = [...document.querySelectorAll('div[class*="session-rail-w"]')]
+        .find(node => getComputedStyle(node).position === 'absolute');
+      const railRect = rail?.getBoundingClientRect();
+      if (railRect && railRect.width > 0 && railRect.left > innerWidth * .45) {
+        conversationRight = Math.min(conversationRight, Math.floor(railRect.left));
+      }
+    }
     const planOpen = document.documentElement.hasAttribute('data-wargames-plan-open');
     const lower = innerHeight - BOTTOM;
     const editor = document.querySelector('[data-cds="ChatComposerEditor"]');
@@ -2314,6 +2330,7 @@ body::after {
     host.style.setProperty('top', `${TOP}px`, 'important');
     host.style.setProperty('height', `${Math.max(0, lower - TOP)}px`, 'important');
     host.style.setProperty('display', allowed ? 'block' : 'none', 'important');
+    document.documentElement.toggleAttribute('data-wargames-feed-shown', allowed);
     const wasShown = shown;
     shown = allowed;
     if (shown && !wasShown) rebuild();
