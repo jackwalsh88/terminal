@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.11.6
+// @version      3.11.7
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C; picker: Option/Alt+Shift+P.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -2307,19 +2307,31 @@ body::after {
     if (codeRoute) markClaudeWordmark();
     const feedLeft = innerWidth - WIDTH - MARGIN;
     let conversationRight = codeRoute ? findPlanDrawerLeft(feedLeft) : feedLeft;
+    let railPresent = false;
     if (codeRoute) {
       const rail = [...document.querySelectorAll('div[class*="session-rail-w"]')]
         .find(node => getComputedStyle(node).position === 'absolute');
       const railRect = rail?.getBoundingClientRect();
       if (railRect && railRect.width > 0 && railRect.left > innerWidth * .45) {
         conversationRight = Math.min(conversationRight, Math.floor(railRect.left));
+        railPresent = true;
       }
     }
     const planOpen = document.documentElement.hasAttribute('data-wargames-plan-open');
     const lower = innerHeight - BOTTOM;
     const editor = document.querySelector('[data-cds="ChatComposerEditor"]');
     syncPromptChevron(editor);
-    if (codeRoute && editor) widenConversation(editor, conversationRight);
+    if (codeRoute && editor && !railPresent) {
+      widenConversation(editor, conversationRight);
+    } else if (railPresent) {
+      // Claude lays the column out itself while the rail is open; undo any skin-applied shift.
+      for (const node of document.querySelectorAll('[data-wargames-wide-column="true"], [data-wargames-assistant-column="true"]')) {
+        node.removeAttribute('data-wargames-wide-column');
+        node.removeAttribute('data-wargames-assistant-column');
+        node.style.removeProperty('--wargames-content-shift');
+        node.style.removeProperty('--wargames-assistant-shift');
+      }
+    }
     // The feed owns its reserved gutter for the entire Code route. Do not tie
     // visibility to Claude's transient composer/message geometry: React can
     // briefly remove or resize those nodes while loading, which made the panel
