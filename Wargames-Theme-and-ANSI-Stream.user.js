@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.11.11
+// @version      3.11.12
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C; picker: Option/Alt+Shift+P.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -466,6 +466,13 @@ main code:not(pre code) {
    leaving the feed's column free. 192px = feed WIDTH 160 + MARGIN 16 on both sides. */
 /* While the feed is shown: keep the WOPR label clear of the toolbar icons, and line the side
    panel up with the feed: same top (44px) and bottom (24px) as the ANSI column. */
+/* Claude (2026-10-31) centers a capped chat column while the side panel is open. Fill the
+   space up to the panel instead: Claude reserves the panel via margin-inline-end. */
+html:not(#wg-a):not(#wg-b):not(#wg-c) div[class*="--chat-column-gutter-start"] {
+  width: calc(100% - var(--session-rail-w, 0px) - var(--session-rail-end, 0px)) !important;
+  max-width: none !important;
+  margin-inline-start: 0 !important;
+}
 html[data-wargames-feed-shown] main::before {
   right: 310px;
 }
