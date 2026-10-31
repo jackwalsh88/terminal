@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.11.12
+// @version      3.11.13
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C; picker: Option/Alt+Shift+P.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -468,7 +468,13 @@ main code:not(pre code) {
    panel up with the feed: same top (44px) and bottom (24px) as the ANSI column. */
 /* Claude (2026-10-31) centers a capped chat column while the side panel is open. Fill the
    space up to the panel instead: Claude reserves the panel via margin-inline-end. */
-html:not(#wg-a):not(#wg-b):not(#wg-c) div[class*="--chat-column-gutter-start"] {
+html:not(#wg-a):not(#wg-b):not(#wg-c) .epitaxy-chat-panel-body div[class*="--chat-column-gutter-start"] {
+  max-width: none !important;
+}
+html:not(#wg-a):not(#wg-b):not(#wg-c) div[class*="pe-[calc(var(--session-rail-w)"] {
+  padding-inline-start: 0 !important;
+}
+html:not(#wg-a):not(#wg-b):not(#wg-c) div[class*="--chat-column-gutter-start"]:not(.epitaxy-chat-panel-body *) {
   width: calc(100% - var(--session-rail-w, 0px) - var(--session-rail-end, 0px)) !important;
   max-width: none !important;
   margin-inline-start: 0 !important;
