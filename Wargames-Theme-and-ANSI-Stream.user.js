@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.11.14
+// @version      3.11.15
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C; picker: Option/Alt+Shift+P.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -343,6 +343,8 @@ main .cds-user-message-body {
   border: 1px solid var(--ansi-border) !important;
   border-radius: 2px !important;
   min-width: 0 !important;
+  /* 3.11.15: Boss wants a 4px gap between the text and the left/right border. */
+  padding-inline: 4px !important;
   overflow-wrap: anywhere !important;
   box-shadow:
     inset 0 0 8px #00ff960a,
