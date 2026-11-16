@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.11.18
+// @version      3.11.19
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C; picker: Option/Alt+Shift+P.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -642,9 +642,10 @@ main::before {
   height: var(--wargames-prompt-line-height, 1.2em);
   display: flex;
   align-items: center;
-  /* 3.11.18: was padding-top: 1px, which sat the ">" 1px below the caret,
-     "+" and mic. Zero puts it on the composer's centerline. */
+  /* 3.11.18: was padding-top: 1px. 3.11.19: the script measures the ">" ink
+     and sets --wargames-prompt-nudge so it centres level with the "+". */
   padding-top: 0;
+  transform: translateY(var(--wargames-prompt-nudge, 0px));
   color: var(--ansi-cyan);
   font-family: var(--ansi-font, monospace);
   font-size: inherit;
@@ -2615,10 +2616,41 @@ button[data-wargames-usage]::before {
     const inputStyle = getComputedStyle(input);
     const fontSize = parseFloat(inputStyle.fontSize) || 16;
     const lineHeight = parseFloat(inputStyle.lineHeight) || fontSize * 1.2;
+    // 3.11.19: the old "+ 1" pushed the ">" a pixel low, and a plain line box
+    // centres the font's em box, not the ">" ink, which sits below the middle.
+    // Claude centres the "+" (Add) button on the first line, so centring the
+    // ">" ink on that line puts it level with the "+" in any font or zoom.
     editor.style.setProperty(
-      '--wargames-prompt-top', `${Math.round(inputRect.top - editorRect.top) + 1}px`
+      '--wargames-prompt-top', `${Math.round(inputRect.top - editorRect.top)}px`
     );
     editor.style.setProperty('--wargames-prompt-line-height', `${Math.round(lineHeight)}px`);
+    editor.style.setProperty('--wargames-prompt-nudge', `${promptInkNudge(editor, fontSize)}px`);
+  }
+
+  // How far (CSS px) to move the ">" so its ink centre lands on its line's centre.
+  // A line box centres the font's ascent/descent; the ink of ">" is centred
+  // (ink ascent - ink descent) / 2 above the baseline, which sits
+  // (ascent - descent) / 2 below the line centre. Cached per font + size.
+  const promptNudgeCache = new Map();
+  function promptInkNudge(editor, fontSize) {
+    const family = getComputedStyle(editor, '::before').fontFamily || 'monospace';
+    const key = `${fontSize}|${family}`;
+    if (promptNudgeCache.has(key)) return promptNudgeCache.get(key);
+    let nudge = 0;
+    try {
+      const ctx = document.createElement('canvas').getContext('2d');
+      ctx.font = `${fontSize}px ${family}`;
+      const m = ctx.measureText('>');
+      if (m.fontBoundingBoxAscent > 0 && m.actualBoundingBoxAscent > 0) {
+        const ink = m.actualBoundingBoxAscent - m.actualBoundingBoxDescent;
+        const box = m.fontBoundingBoxAscent - m.fontBoundingBoxDescent;
+        nudge = Math.round(((ink - box) / 2) * 4) / 4;
+        if (!Number.isFinite(nudge) || Math.abs(nudge) > fontSize / 2) nudge = 0;
+      }
+    } catch (_) { nudge = 0; }
+    // Fonts load late: only remember the answer once the prompt font is ready.
+    if (document.fonts?.check?.(`${fontSize}px ${family}`)) promptNudgeCache.set(key, nudge);
+    return nudge;
   }
 
   function checkSpace() {
