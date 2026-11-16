@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.11.17
+// @version      3.11.18
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C; picker: Option/Alt+Shift+P.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -642,7 +642,9 @@ main::before {
   height: var(--wargames-prompt-line-height, 1.2em);
   display: flex;
   align-items: center;
-  padding-top: 1px;
+  /* 3.11.18: was padding-top: 1px, which sat the ">" 1px below the caret,
+     "+" and mic. Zero puts it on the composer's centerline. */
+  padding-top: 0;
   color: var(--ansi-cyan);
   font-family: var(--ansi-font, monospace);
   font-size: inherit;
@@ -783,6 +785,19 @@ button[data-wargames-usage]::before {
   white-space: nowrap;
   color: inherit;
   font-variant-numeric: tabular-nums;
+}
+
+/* 3.11.18: Claude's "working" mark (the dots beside the turn timer, and the
+   spark it settles into) in the skin's purple instead of Claude's clay orange.
+   The still dot and the spark take their colour from --cds-clay. The animated
+   dots are a ready-made orange picture, so that one is recoloured with a
+   filter: hue-rotate(250deg) saturate(1.6) brightness(1.2) turns #d97757 into
+   #cc88ff exactly. */
+[data-cds="TurnStatus"] {
+  --cds-clay: var(--ansi-amber) !important;
+}
+[data-cds="WorkingMark"] [style*="background-image"] {
+  filter: hue-rotate(250deg) saturate(1.6) brightness(1.2) !important;
 }
 
 `;
