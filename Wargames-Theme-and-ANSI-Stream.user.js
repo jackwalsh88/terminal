@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.11.13
+// @version      3.11.14
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C; picker: Option/Alt+Shift+P.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -2285,7 +2285,7 @@ body::after {
   let loadFailed = false;
   let shown = false;
   let hovering = false;
-  const BATCH_SIZE = 12;
+  const BATCH_SIZE = 6; // 3.11.14: was 12; one page still scrolls ~6 min
   let ciaQueue = [];
   let ciaCursor = 0;
   let lastCiaTitle = '';
@@ -2623,6 +2623,36 @@ body::after {
   // Low-frequency geometry check also handles Claude's navigation without reloads.
   setInterval(() => { if (!document.hidden) checkSpace(); }, 750);
 
+  // The panel shows art at ~152 CSS px wide, but the source PNGs are 640-720 px
+  // wide and up to ~10,000 px tall, so each one decoded at full size costs
+  // ~8 MB (up to 24 MB). Shrink each image to the device pixels the panel
+  // actually paints (nearest-neighbour, same look as image-rendering:pixelated)
+  // so the browser only ever holds the small copy. Any failure keeps the original.
+  const ART_CSS_WIDTH = WIDTH - 8; // panel border 2px + viewport padding 6px
+  async function shrinkArtwork(blob, src) {
+    if (/\.gif$/i.test(src)) return null; // keep animated GIFs as they are
+    let bitmap = null;
+    try {
+      bitmap = await createImageBitmap(blob);
+      const target = Math.ceil(ART_CSS_WIDTH * Math.max(1, window.devicePixelRatio || 1));
+      if (bitmap.width <= target * 1.25) return null; // too little to gain
+      const height = Math.max(1, Math.round(bitmap.height * target / bitmap.width));
+      const canvas = document.createElement('canvas');
+      canvas.width = target;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingEnabled = false;
+      ctx.drawImage(bitmap, 0, 0, target, height);
+      const url = canvas.toDataURL('image/png');
+      canvas.width = canvas.height = 0; // release the canvas backing store now
+      return url.length > 32 ? url : null;
+    } catch (_) {
+      return null;
+    } finally {
+      if (bitmap) bitmap.close();
+    }
+  }
+
   // Claude may restrict third-party image URLs. Violentmonkey fetches each source;
   // converting the response in memory lets the existing image display work.
   function loadArtwork(art, destination = group) {
@@ -2646,14 +2676,18 @@ body::after {
         timeout: 30000,
         onload(response) {
           if (response.status !== 200 || !response.response) return failed();
-          const reader = new FileReader();
-          reader.onerror = failed;
-          reader.onload = () => {
+          const show = url => {
             img.onload = () => resolve(true);
             img.onerror = failed;
-            img.src = reader.result;
+            img.src = url;
           };
-          reader.readAsDataURL(response.response);
+          shrinkArtwork(response.response, art.src).then(small => {
+            if (small) return show(small);
+            const reader = new FileReader();
+            reader.onerror = failed;
+            reader.onload = () => show(reader.result);
+            reader.readAsDataURL(response.response);
+          });
         },
         onerror: failed,
         ontimeout: failed
