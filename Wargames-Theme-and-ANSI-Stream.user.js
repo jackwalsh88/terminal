@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.11.15
+// @version      3.11.16
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C; picker: Option/Alt+Shift+P.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -766,9 +766,50 @@ body::after {
   }
 }
 
+/* 3.11.16: weekly usage % beside Claude's usage ring (composer, bottom right).
+   The script copies the % from the ring's own aria-label into data-wargames-usage;
+   the ring button widens to fit and stays the same clickable popup button. */
+button[data-wargames-usage] {
+  width: auto !important;
+  aspect-ratio: auto !important;
+  padding-inline: 4px 5px !important;
+  gap: 5px !important;
+}
+button[data-wargames-usage]::before {
+  content: attr(data-wargames-usage);
+  font-family: var(--ansi-font);
+  font-size: 12px;
+  line-height: 1;
+  white-space: nowrap;
+  color: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
 `;
   themeStyle.disabled = !/^\/code(?:\/|$)/.test(location.pathname);
   document.documentElement.append(themeStyle);
+
+  // 3.11.16: show the usage % beside Claude's usage ring. Claude labels the ring
+  // "Usage: Weekly · all models: 10%, Resets Sat 5:00 AM"; copy the % into an
+  // attribute the CSS above prints. Only an attribute is set (no nodes added),
+  // so Claude's React tree is never disturbed.
+  const usageTag = name => {
+    if (/week/i.test(name)) {
+      const model = name.match(/opus|sonnet|fable|haiku/i);
+      return model ? model[0].slice(0, 2).toUpperCase() + ' WK' : 'WK';
+    }
+    if (/session|5.?h|hour/i.test(name)) return '5H';
+    return (name.replace(/[^A-Za-z0-9 ]/g, '').trim().split(/\s+/)[0] || 'USE').slice(0, 4).toUpperCase();
+  };
+  const markUsage = () => {
+    for (const ring of document.querySelectorAll('button[aria-label^="Usage:"]')) {
+      const m = (ring.getAttribute('aria-label') || '').match(/^Usage:\s*(.+?):\s*(\d+(?:\.\d+)?)%/);
+      const text = m ? `${usageTag(m[1])} ${m[2]}%` : null;
+      if (text === null) ring.removeAttribute('data-wargames-usage');
+      else if (ring.getAttribute('data-wargames-usage') !== text) ring.setAttribute('data-wargames-usage', text);
+    }
+  };
+  setInterval(() => { if (!document.hidden) markUsage(); }, 2000);
 
   // Keep the CRT glass independent of Claude's React/body stacking contexts.
   const crtOverlay = document.createElement('div');
