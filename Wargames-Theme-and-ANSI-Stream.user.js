@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.11.16
+// @version      3.11.17
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C; picker: Option/Alt+Shift+P.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -801,15 +801,42 @@ button[data-wargames-usage]::before {
     if (/session|5.?h|hour/i.test(name)) return '5H';
     return (name.replace(/[^A-Za-z0-9 ]/g, '').trim().split(/\s+/)[0] || 'USE').slice(0, 4).toUpperCase();
   };
+  // 3.11.17: per-model weekly limits (e.g. "Weekly · Fable") are not in the ring's
+  // label, only in Claude's own usage data. Read that (same-origin GET, once a
+  // minute) and, when the selected model has its own weekly limit, show that instead.
+  let scopedUsage = [];
+  const refreshScopedUsage = async () => {
+    try {
+      const org = (document.cookie.match(/(?:^|;\s*)lastActiveOrg=([0-9a-f-]+)/) || [])[1];
+      if (!org) return;
+      const res = await fetch(`${location.origin}/api/organizations/${org}/usage`, { credentials: 'include' });
+      if (!res.ok) return;
+      const data = await res.json();
+      scopedUsage = (Array.isArray(data.limits) ? data.limits : [])
+        .filter(l => l && l.group === 'weekly' && typeof l.percent === 'number' &&
+          l.scope && l.scope.model && l.scope.model.display_name)
+        .map(l => ({ name: String(l.scope.model.display_name), percent: l.percent }));
+    } catch (_) { /* keep the last known values; the ring's own label still works */ }
+  };
+  const scopedUsageText = () => {
+    const picker = document.querySelector('button[aria-label^="Model:"]');
+    const model = picker ? (picker.getAttribute('aria-label') || '').toLowerCase() : '';
+    const hit = model && scopedUsage.find(l => model.includes(l.name.toLowerCase()));
+    return hit ? `${hit.name.toUpperCase()} WK ${hit.percent}%` : null;
+  };
   const markUsage = () => {
+    const scoped = scopedUsageText();
     for (const ring of document.querySelectorAll('button[aria-label^="Usage:"]')) {
       const m = (ring.getAttribute('aria-label') || '').match(/^Usage:\s*(.+?):\s*(\d+(?:\.\d+)?)%/);
-      const text = m ? `${usageTag(m[1])} ${m[2]}%` : null;
+      const text = scoped || (m ? `${usageTag(m[1])} ${m[2]}%` : null);
       if (text === null) ring.removeAttribute('data-wargames-usage');
       else if (ring.getAttribute('data-wargames-usage') !== text) ring.setAttribute('data-wargames-usage', text);
     }
   };
   setInterval(() => { if (!document.hidden) markUsage(); }, 2000);
+  const onCodeRoute = () => /^\/code(?:\/|$)/.test(location.pathname);
+  if (onCodeRoute()) refreshScopedUsage();
+  setInterval(() => { if (!document.hidden && onCodeRoute()) refreshScopedUsage(); }, 60000);
 
   // Keep the CRT glass independent of Claude's React/body stacking contexts.
   const crtOverlay = document.createElement('div');
