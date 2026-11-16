@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.11.19
+// @version      3.11.20
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C; picker: Option/Alt+Shift+P.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -726,8 +726,9 @@ body::after {
   box-shadow:
     inset 0 0 150px rgb(0 0 0 / .33),
     inset 0 0 42px rgb(0 255 140 / .08) !important;
-  backdrop-filter: contrast(1.04) saturate(.92) !important;
-  -webkit-backdrop-filter: contrast(1.04) saturate(.92) !important;
+  /* 3.11.20: the full-window backdrop-filter is gone. It made the browser
+     re-filter the whole window on every repaint (feed scroll, streaming text),
+     which kept a 2017 MacBook Pro warm enough for macOS to pause iCloud. */
   opacity: 1 !important;
 }
 
@@ -2378,7 +2379,16 @@ button[data-wargames-usage]::before {
   let nextBatchPromise = null;
   let switchingBatch = false;
   const reducedMotion = matchMedia('(prefers-reduced-motion: reduce)');
-  let manuallyPaused = reducedMotion.matches;
+  // 3.11.20: the pause button is remembered per browser. First run: paused on
+  // Macs (the smooth scroll costs about half a core there), running elsewhere.
+  const FEED_STORE = 'wargamesFeedPaused';
+  let savedFeedPause = null;
+  try {
+    const stored = GM_getValue(FEED_STORE, null);
+    if (typeof stored === 'boolean') savedFeedPause = stored;
+  } catch (_) { /* no storage: fall back to the default */ }
+  let manuallyPaused = reducedMotion.matches ||
+    (savedFeedPause === null ? /Mac/i.test(navigator.platform || '') : savedFeedPause);
 
   function updatePlayback() {
     const paused = manuallyPaused || hovering || document.hidden || !shown;
@@ -2730,6 +2740,7 @@ button[data-wargames-usage]::before {
     selectedArtworkTitle = '';
     selectedMessage.hidden = true;
     manuallyPaused = !manuallyPaused;
+    try { GM_setValue(FEED_STORE, manuallyPaused); } catch (_) { /* not remembered */ }
     updatePlayback();
   });
   panel.addEventListener('mouseenter', () => { hovering = true; updatePlayback(); });
