@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.11.22
+// @version      3.11.23
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C; picker: Option/Alt+Shift+P.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -885,7 +885,7 @@ button[data-wargames-usage]::before {
   }
 
 
-  // 3.11.22 (Boss 11/17): welcome / welcome-back terminal message. Skull = "ASCII head" by
+  // 3.11.22-23 (Boss 11/17): welcome / welcome-back terminal message. Skull = "ASCII head" by
   // littlebitspace (Mistigris, Oct 2025). New session: printed above Claude's start card.
   // Reopened session: printed after the last message; cleared when you type or a new turn
   // arrives. In-flow text only, never takes clicks. Toggle in the Violentmonkey menu.
@@ -921,9 +921,10 @@ button[data-wargames-usage]::before {
       box.setAttribute('aria-hidden', 'true');
       box.style.cssText = 'all:initial;display:flex;flex-direction:column;align-items:center;' +
         'justify-content:center;pointer-events:none;width:100%;';
-      const pre = document.createElement('pre');
+      // div, not pre: the theme draws a code-block box around every <pre>.
+      const pre = document.createElement('div');
       pre.style.cssText = 'all:initial;display:block;white-space:pre;margin:0;color:#00e5ff;line-height:1.18;font-family:' + mono + ';';
-      const txt = document.createElement('pre');
+      const txt = document.createElement('div');
       txt.style.cssText = 'all:initial;display:block;white-space:pre;margin:.8em 0 0;color:#8fffab;line-height:1.5;' +
         'font-family:' + mono + ';text-shadow:0 0 5px #00e5ff55;';
       box.append(pre, txt);
@@ -1008,7 +1009,7 @@ button[data-wargames-usage]::before {
     // Reopened session: one greeting per visit, printed after the last message.
     let seen = {};
     try { seen = JSON.parse(get('sessionSeen', '{}')) || {}; } catch (e) {}
-    let cur = null, curPath = '', curRows = 0;
+    let cur = null, curPath = ''; let typed = false;
     const drop = () => { if (cur) { cur.remove(); cur = null; } };
     function reopened(id) {
       const tail = document.querySelector('[data-testid="transcript-after-rows"]');
@@ -1025,12 +1026,12 @@ button[data-wargames-usage]::before {
         put('sessionSeen', JSON.stringify(seen));
         cur = makeGreeting(['> WELCOME BACK.', '  LAST LOGIN: ' + (prev ? stamp(prev) : 'UNKNOWN')]);
         cur.box.style.margin = '24px 0 8px';
-        curRows = rows.children.length;
+        typed = false;
       }
       if (!cur) return;
-      // Typing or a new turn clears the greeting so it never sits between messages.
-      const input = document.querySelector('[data-testid="code-prompt-input"]');
-      if (rows.children.length > curRows || (input && input.textContent.trim())) { drop(); return; }
+      // Only a real key press, paste or send in the composer clears it. (3.11.23: 3.11.22 also
+      // watched the row count and a saved draft, which cleared it within half a second.)
+      if (typed) { drop(); return; }
       if (cur.box.parentElement !== tail) {
         const nearBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 120;
         tail.append(cur.box);
@@ -1039,9 +1040,13 @@ button[data-wargames-usage]::before {
       cur.size(scroller.clientHeight * 0.62, tail.clientWidth - 16);
       cur.play();
     }
-    document.addEventListener('beforeinput', e => {
-      if (cur && e.target && e.target.closest && e.target.closest('[data-testid="code-prompt-input"]')) drop();
-    }, true);
+    const inComposer = e => e.target && e.target.closest && e.target.closest('[data-testid="code-prompt-input"]');
+    const onType = e => {
+      if (!cur || !inComposer(e)) return;
+      if (e.type === 'keydown' && e.key.length !== 1 && e.key !== 'Enter' && e.key !== 'Backspace') return;
+      typed = true; drop();
+    };
+    ['keydown', 'paste', 'beforeinput'].forEach(t => document.addEventListener(t, onType, true));
 
     function tick() {
       const m = location.pathname.match(/^\/code(?:\/([^/?#]+))?\/?$/);
