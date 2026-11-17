@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.11.20
+// @version      3.11.21
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C; picker: Option/Alt+Shift+P.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -883,6 +883,68 @@ button[data-wargames-usage]::before {
       document.documentElement.append(crtOverlay);
     }
   }
+
+
+  // 3.11.21 (Boss 11/17): boot splash. "ASCII head" by littlebitspace (Mistigris, Oct 2025)
+  // as cyan terminal text. Once per tab; any click or key skips it. Toggle in the Violentmonkey menu.
+  (() => {
+    const KEY = 'wargames-splash-seen';
+    let on = true;
+    try { on = GM_getValue('splashOn', true); } catch (e) {}
+    try {
+      GM_registerMenuCommand('Splash screen: turn ' + (on ? 'off' : 'on'), () => {
+        try { GM_setValue('splashOn', !on); } catch (e) {}
+        location.reload();
+      });
+    } catch (e) {}
+    if (!on || window.top !== window) return;
+    try { if (sessionStorage.getItem(KEY)) return; sessionStorage.setItem(KEY, '1'); } catch (e) {}
+    const SKULL = [" .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .", "", " .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .", "                           _..+:%:%:%::+._", " .   .   .   .   .   .  .:%:%P%D%R%U%B%S&%:. .   .   .   .   .   .", "                     .:%H%K%VMQOULACMRABIA%T%:.", " .   .   .   .   . ,::%M%D%Q@YUSCKAOITCDGJTV%I%%:.   .   .   .   .", "                 ,:.:%:%IKR%WZMVCAZIRAORFPN%C%L%Z%:", " .   .   .   .  ,:..::%%H%EYMVMUMYICDGHVWBJSTI%F%%S& .   .   .   .", "               ,...:.::%:%WY@LITTLEBITSPACEBT%W%E%TN:", " .   .   .   . .....:.::%%D%RTBMMKWUBTTBDIURFW%T%D%B%.   .   .   .", "              | . ..%:.:%E%ERHNYUNGNDAMISBHPT%W%TB%I%|", " .   .   .   .| .  . .::%:%%%PALVTJADGBAWTMU%D%Y%%:%%|   .   .   .", "              | .   .:N?'    ``:%T%%J%:'  ``:%EB::%T%|", " .   .   .   .|.   .:'          `::%%'       `:%%:%D%|   .   .   .", "              | .   '         . .%UI:          `:.S%:", " .   .   .   .:    .l           ::PQ%        . .%%%:'.   .   .   .", "               \\   .& .        :'  `%&       ' jB%:::", " .   .   .   . :  ..%: ``    .%'  . `BR:.     .:UN.:..   .   .   .", "                \\ .::%Ssss%::.'      `%%XY%::%%WYR%?'", " .   .   .   .  :  ..:%:..: .:    .   :%:..::%%Q?:'  .   .   .   .", "                 \\  .::.::...:.  ,:  ,%G%:::..:.:.'", " .   .   .   .   .\\      .::.:&:::%U%FNUB%'   ,: '   .   .   .   .", "                   \\:. ..  .:%:%:%ZBYWTFN%  \u007f %:", " .   .   .   .   .  : . . ...%:%:U%G%J%W%%.  :%' .   .   .   .   .", "                    ::.   .:.:.%.Y.FVY%B:%: .%:", " .   .   .   .   .  :: .      `\u00b0`\u00b2`\u00aa\u00ba'\"s,s\":%.%. .   .   .   .   .", "                    ` . .  . .:.:..:W:T%%%HBZ.?'", " .   .   .   .   .   ` . . . ..:.:&:.:%:%%T%%%:  .   .   .   .   .", "                       `. . ....:%U%B%%V.E%Y:'", " .   .   .   .   .   .   `...:.::%IBA%R%X%?' .   .   .   .   .   .", "                           `::%&:?:%UF%Y?'", " .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   ."];
+    const veil = document.createElement('div');
+    veil.id = 'wargames-splash';
+    veil.setAttribute('aria-hidden', 'true');
+    veil.style.cssText = 'all:initial;position:fixed;inset:0;z-index:2147483646;background:#020805;display:flex;' +
+      'flex-direction:column;align-items:center;justify-content:center;gap:1.2em;opacity:1;transition:opacity .45s ease;cursor:default;';
+    const pre = document.createElement('pre');
+    pre.style.cssText = 'all:initial;display:block;white-space:pre;margin:0;color:#00e5ff;line-height:1.18;' +
+      'font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;' +
+      'font-size:min(calc(88vw / 68 / 0.6), calc(78vh / 34 / 1.18), 18px);';
+    SKULL.forEach((line, i) => {
+      // Background grid dots dim green, skull letters bright cyan, texture base cyan.
+      let k = 0;
+      while (k < line.length) {
+        let j = k, cls;
+        const ch = line[k];
+        const gridDot = ch === '.' && line[k - 1] === ' ' && (line[k + 1] === undefined || line.slice(k + 1, k + 4) === '   ') &&
+          (k < 2 || line.slice(Math.max(0, k - 4), k - 1).trim() === '');
+        if (gridDot) { cls = 'd'; j = k + 1; }
+        else if (/[A-Z@]/.test(ch)) { cls = 'b'; while (j < line.length && /[A-Z@]/.test(line[j])) j++; }
+        else { cls = 'n'; j = k + 1; while (j < line.length && !/[A-Z@.]/.test(line[j])) j++; if (j === k) j++; }
+        const span = document.createElement('span');
+        span.textContent = line.slice(k, j);
+        span.style.cssText = 'all:unset;color:' + (cls === 'd' ? '#145938' : cls === 'b' ? '#50e7ff' : '#00e5ff') + ';';
+        pre.append(span);
+        k = j;
+      }
+      if (i < SKULL.length - 1) pre.append('\n');
+    });
+    const credit = document.createElement('div');
+    credit.textContent = 'ascii head \u00b7 littlebitspace / mistigris';
+    credit.style.cssText = 'all:initial;color:#145938;font:11px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.2em;';
+    veil.append(pre, credit);
+    let gone = false;
+    const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const close = () => {
+      if (gone) return; gone = true;
+      removeEventListener('keydown', close, true);
+      veil.style.opacity = '0';
+      setTimeout(() => veil.remove(), reduce ? 0 : 480);
+    };
+    veil.addEventListener('pointerdown', e => { e.stopPropagation(); close(); });
+    addEventListener('keydown', close, true);
+    document.documentElement.append(veil);
+    setTimeout(close, 2200);
+  })();
 
   // Fetch selected images from 16colo.rs through Violentmonkey; do not alter Claude's layout.
   const SPEED = 10; // pixels per second
