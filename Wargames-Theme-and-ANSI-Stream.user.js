@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.11.21
+// @version      3.11.22
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C; picker: Option/Alt+Shift+P.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -885,65 +885,172 @@ button[data-wargames-usage]::before {
   }
 
 
-  // 3.11.21 (Boss 11/17): boot splash. "ASCII head" by littlebitspace (Mistigris, Oct 2025)
-  // as cyan terminal text. Once per tab; any click or key skips it. Toggle in the Violentmonkey menu.
+  // 3.11.22 (Boss 11/17): welcome / welcome-back terminal message. Skull = "ASCII head" by
+  // littlebitspace (Mistigris, Oct 2025). New session: printed above Claude's start card.
+  // Reopened session: printed after the last message; cleared when you type or a new turn
+  // arrives. In-flow text only, never takes clicks. Toggle in the Violentmonkey menu.
   (() => {
-    const KEY = 'wargames-splash-seen';
+    if (window.top !== window) return;
     let on = true;
-    try { on = GM_getValue('splashOn', true); } catch (e) {}
+    try { on = GM_getValue('welcomeOn', true); } catch (e) {}
     try {
-      GM_registerMenuCommand('Splash screen: turn ' + (on ? 'off' : 'on'), () => {
-        try { GM_setValue('splashOn', !on); } catch (e) {}
+      GM_registerMenuCommand('Welcome screen: turn ' + (on ? 'off' : 'on'), () => {
+        try { GM_setValue('welcomeOn', !on); } catch (e) {}
         location.reload();
       });
     } catch (e) {}
-    if (!on || window.top !== window) return;
-    try { if (sessionStorage.getItem(KEY)) return; sessionStorage.setItem(KEY, '1'); } catch (e) {}
-    const SKULL = [" .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .", "", " .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .", "                           _..+:%:%:%::+._", " .   .   .   .   .   .  .:%:%P%D%R%U%B%S&%:. .   .   .   .   .   .", "                     .:%H%K%VMQOULACMRABIA%T%:.", " .   .   .   .   . ,::%M%D%Q@YUSCKAOITCDGJTV%I%%:.   .   .   .   .", "                 ,:.:%:%IKR%WZMVCAZIRAORFPN%C%L%Z%:", " .   .   .   .  ,:..::%%H%EYMVMUMYICDGHVWBJSTI%F%%S& .   .   .   .", "               ,...:.::%:%WY@LITTLEBITSPACEBT%W%E%TN:", " .   .   .   . .....:.::%%D%RTBMMKWUBTTBDIURFW%T%D%B%.   .   .   .", "              | . ..%:.:%E%ERHNYUNGNDAMISBHPT%W%TB%I%|", " .   .   .   .| .  . .::%:%%%PALVTJADGBAWTMU%D%Y%%:%%|   .   .   .", "              | .   .:N?'    ``:%T%%J%:'  ``:%EB::%T%|", " .   .   .   .|.   .:'          `::%%'       `:%%:%D%|   .   .   .", "              | .   '         . .%UI:          `:.S%:", " .   .   .   .:    .l           ::PQ%        . .%%%:'.   .   .   .", "               \\   .& .        :'  `%&       ' jB%:::", " .   .   .   . :  ..%: ``    .%'  . `BR:.     .:UN.:..   .   .   .", "                \\ .::%Ssss%::.'      `%%XY%::%%WYR%?'", " .   .   .   .  :  ..:%:..: .:    .   :%:..::%%Q?:'  .   .   .   .", "                 \\  .::.::...:.  ,:  ,%G%:::..:.:.'", " .   .   .   .   .\\      .::.:&:::%U%FNUB%'   ,: '   .   .   .   .", "                   \\:. ..  .:%:%:%ZBYWTFN%  \u007f %:", " .   .   .   .   .  : . . ...%:%:U%G%J%W%%.  :%' .   .   .   .   .", "                    ::.   .:.:.%.Y.FVY%B:%: .%:", " .   .   .   .   .  :: .      `\u00b0`\u00b2`\u00aa\u00ba'\"s,s\":%.%. .   .   .   .   .", "                    ` . .  . .:.:..:W:T%%%HBZ.?'", " .   .   .   .   .   ` . . . ..:.:&:.:%:%%T%%%:  .   .   .   .   .", "                       `. . ....:%U%B%%V.E%Y:'", " .   .   .   .   .   .   `...:.::%IBA%R%X%?' .   .   .   .   .   .", "                           `::%&:?:%UF%Y?'", " .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   ."];
-    const veil = document.createElement('div');
-    veil.id = 'wargames-splash';
-    veil.setAttribute('aria-hidden', 'true');
-    veil.style.cssText = 'all:initial;position:fixed;inset:0;z-index:2147483646;background:#020805;display:flex;' +
-      'flex-direction:column;align-items:center;justify-content:center;gap:1.2em;opacity:1;transition:opacity .45s ease;cursor:default;';
-    const pre = document.createElement('pre');
-    pre.style.cssText = 'all:initial;display:block;white-space:pre;margin:0;color:#00e5ff;line-height:1.18;' +
-      'font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;' +
-      'font-size:min(calc(88vw / 68 / 0.6), calc(78vh / 34 / 1.18), 18px);';
-    SKULL.forEach((line, i) => {
-      // Background grid dots dim green, skull letters bright cyan, texture base cyan.
-      let k = 0;
-      while (k < line.length) {
-        let j = k, cls;
-        const ch = line[k];
-        const gridDot = ch === '.' && line[k - 1] === ' ' && (line[k + 1] === undefined || line.slice(k + 1, k + 4) === '   ') &&
-          (k < 2 || line.slice(Math.max(0, k - 4), k - 1).trim() === '');
-        if (gridDot) { cls = 'd'; j = k + 1; }
-        else if (/[A-Z@]/.test(ch)) { cls = 'b'; while (j < line.length && /[A-Z@]/.test(line[j])) j++; }
-        else { cls = 'n'; j = k + 1; while (j < line.length && !/[A-Z@.]/.test(line[j])) j++; if (j === k) j++; }
-        const span = document.createElement('span');
-        span.textContent = line.slice(k, j);
-        span.style.cssText = 'all:unset;color:' + (cls === 'd' ? '#145938' : cls === 'b' ? '#50e7ff' : '#00e5ff') + ';';
-        pre.append(span);
-        k = j;
-      }
-      if (i < SKULL.length - 1) pre.append('\n');
-    });
-    const credit = document.createElement('div');
-    credit.textContent = 'ascii head \u00b7 littlebitspace / mistigris';
-    credit.style.cssText = 'all:initial;color:#145938;font:11px ui-monospace,Menlo,Consolas,monospace;letter-spacing:.2em;';
-    veil.append(pre, credit);
-    let gone = false;
-    const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const close = () => {
-      if (gone) return; gone = true;
-      removeEventListener('keydown', close, true);
-      veil.style.opacity = '0';
-      setTimeout(() => veil.remove(), reduce ? 0 : 480);
+    if (!on) return;
+    const SKULL = [" .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .", "", " .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .", "                           _..+:%:%:%::+._", " .   .   .   .   .   .  .:%:%P%D%R%U%B%S&%:. .   .   .   .   .   .", "                     .:%H%K%VMQOULACMRABIA%T%:.", " .   .   .   .   . ,::%M%D%Q@YUSCKAOITCDGJTV%I%%:.   .   .   .   .", "                 ,:.:%:%IKR%WZMVCAZIRAORFPN%C%L%Z%:", " .   .   .   .  ,:..::%%H%EYMVMUMYICDGHVWBJSTI%F%%S& .   .   .   .", "               ,...:.::%:%WY@LITTLEBITSPACEBT%W%E%TN:", " .   .   .   . .....:.::%%D%RTBMMKWUBTTBDIURFW%T%D%B%.   .   .   .", "              | . ..%:.:%E%ERHNYUNGNDAMISBHPT%W%TB%I%|", " .   .   .   .| .  . .::%:%%%PALVTJADGBAWTMU%D%Y%%:%%|   .   .   .", "              | .   .:N?'    ``:%T%%J%:'  ``:%EB::%T%|", " .   .   .   .|.   .:'          `::%%'       `:%%:%D%|   .   .   .", "              | .   '         . .%UI:          `:.S%:", " .   .   .   .:    .l           ::PQ%        . .%%%:'.   .   .   .", "               \\   .& .        :'  `%&       ' jB%:::", " .   .   .   . :  ..%: ``    .%'  . `BR:.     .:UN.:..   .   .   .", "                \\ .::%Ssss%::.'      `%%XY%::%%WYR%?'", " .   .   .   .  :  ..:%:..: .:    .   :%:..::%%Q?:'  .   .   .   .", "                 \\  .::.::...:.  ,:  ,%G%:::..:.:.'", " .   .   .   .   .\\      .::.:&:::%U%FNUB%'   ,: '   .   .   .   .", "                   \\:. ..  .:%:%:%ZBYWTFN%  \u2302 %:", " .   .   .   .   .  : . . ...%:%:U%G%J%W%%.  :%' .   .   .   .   .", "                    ::.   .:.:.%.Y.FVY%B:%: .%:", " .   .   .   .   .  :: .      `\u00b0`\u00b2`\u00aa\u00ba'\"s,s\":%.%. .   .   .   .   .", "                    ` . .  . .:.:..:W:T%%%HBZ.?'", " .   .   .   .   .   ` . . . ..:.:&:.:%:%%T%%%:  .   .   .   .   .", "                       `. . ....:%U%B%%V.E%Y:'", " .   .   .   .   .   .   `...:.::%IBA%R%X%?' .   .   .   .   .   .", "                           `::%&:?:%UF%Y?'", " .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   .   ."];
+    const COLS = 68, ROWS = SKULL.length;
+    const get = (k, d) => { try { return GM_getValue(k, d); } catch (e) { return d; } };
+    const put = (k, v) => { try { GM_setValue(k, v); } catch (e) {} };
+    const lastVisit = Number(get('lastVisit', 0)) || 0;
+    put('lastVisit', Date.now());
+    const pad = n => String(n).padStart(2, '0');
+    const stamp = t => {
+      const d = new Date(t);
+      return d.toDateString().toUpperCase() + ' ' + pad(d.getHours()) + ':' + pad(d.getMinutes());
     };
-    veil.addEventListener('pointerdown', e => { e.stopPropagation(); close(); });
-    addEventListener('keydown', close, true);
-    document.documentElement.append(veil);
-    setTimeout(close, 2200);
+    const reduce = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const mono = 'ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace';
+
+    // One greeting block: skull rows revealed top to bottom, then the text typed out.
+    function makeGreeting(lines) {
+      const box = document.createElement('div');
+      box.className = 'wargames-welcome';
+      box.setAttribute('aria-hidden', 'true');
+      box.style.cssText = 'all:initial;display:flex;flex-direction:column;align-items:center;' +
+        'justify-content:center;pointer-events:none;width:100%;';
+      const pre = document.createElement('pre');
+      pre.style.cssText = 'all:initial;display:block;white-space:pre;margin:0;color:#00e5ff;line-height:1.18;font-family:' + mono + ';';
+      const txt = document.createElement('pre');
+      txt.style.cssText = 'all:initial;display:block;white-space:pre;margin:.8em 0 0;color:#8fffab;line-height:1.5;' +
+        'font-family:' + mono + ';text-shadow:0 0 5px #00e5ff55;';
+      box.append(pre, txt);
+      const rowEls = SKULL.map(line => {
+        const row = document.createElement('span');
+        row.style.cssText = 'all:unset;display:block;white-space:pre;visibility:hidden;';
+        let k = 0;
+        while (k < line.length) {
+          let j, color;
+          const ch = line[k];
+          const gridDot = ch === '.' && line[k - 1] === ' ' &&
+            (line[k + 1] === undefined || line.slice(k + 1, k + 4) === '   ') &&
+            line.slice(Math.max(0, k - 4), Math.max(0, k - 1)).trim() === '';
+          if (gridDot) { color = '#145938'; j = k + 1; }
+          else if (/[A-Z@]/.test(ch)) { color = '#50e7ff'; j = k; while (j < line.length && /[A-Z@]/.test(line[j])) j++; }
+          else { color = '#00e5ff'; j = k + 1; while (j < line.length && !/[A-Z@.]/.test(line[j])) j++; }
+          const s = document.createElement('span');
+          s.textContent = line.slice(k, j);
+          s.style.cssText = 'all:unset;color:' + color + ';';
+          row.append(s);
+          k = j;
+        }
+        if (!line.length) row.textContent = ' ';
+        pre.append(row);
+        return row;
+      });
+      const credit = document.createElement('span');
+      credit.textContent = 'ascii head · littlebitspace / mistigris';
+      credit.style.cssText = 'all:unset;display:block;text-align:center;color:#145938;font-size:.75em;letter-spacing:.15em;visibility:hidden;';
+      pre.append(credit);
+      const full = lines.join('\n');
+      const timers = [];
+      let played = false;
+      return {
+        box,
+        size(h, w) {
+          const fs = Math.min(h / ((ROWS + 1) * 1.18 + (lines.length + 1) * 1.5 * 1.15), w / (COLS * 0.6), 14);
+          if (fs < 5.5) { pre.style.display = 'none'; txt.style.fontSize = '13px'; }
+          else { pre.style.display = 'block'; pre.style.fontSize = fs + 'px'; txt.style.fontSize = Math.max(11, Math.min(15, fs * 1.15)) + 'px'; }
+        },
+        play() {
+          if (played) return;
+          played = true;
+          let i = 0, n = 0, blinkOn = true;
+          const blink = () => {
+            blinkOn = !blinkOn;
+            txt.textContent = full + (blinkOn ? ' █' : '  ');
+            timers.push(setTimeout(blink, 530));
+          };
+          const type = () => {
+            txt.textContent = full.slice(0, n) + (n < full.length ? '█' : ' █');
+            if (n++ < full.length) timers.push(setTimeout(type, reduce ? 0 : 28));
+            else if (!reduce) timers.push(setTimeout(blink, 530));
+          };
+          const step = () => {
+            if (i < rowEls.length) { rowEls[i++].style.visibility = 'visible'; timers.push(setTimeout(step, reduce ? 0 : 22)); return; }
+            credit.style.visibility = 'visible';
+            type();
+          };
+          step();
+        },
+        remove() { timers.forEach(clearTimeout); box.remove(); }
+      };
+    }
+
+    // New session screen: above Claude's start card (environment picker).
+    const fresh = makeGreeting(lastVisit
+      ? ['> WELCOME BACK.', '  LAST LOGIN: ' + stamp(lastVisit)]
+      : ['> WELCOME.', '  FIRST LOGIN: ' + stamp(Date.now())]);
+    fresh.box.style.order = '-1';
+    fresh.box.style.marginBottom = '28px';
+    function newSession() {
+      const card = document.querySelector('[data-testid="epitaxy-start-card"]');
+      const host = card && card.parentElement;
+      if (!host) return;
+      if (fresh.box.parentElement !== host) host.append(fresh.box);
+      const col = host.parentElement && host.parentElement.parentElement;
+      fresh.size((col ? col.clientHeight : innerHeight) - card.offsetHeight - 90, host.clientWidth - 16);
+      fresh.play();
+    }
+
+    // Reopened session: one greeting per visit, printed after the last message.
+    let seen = {};
+    try { seen = JSON.parse(get('sessionSeen', '{}')) || {}; } catch (e) {}
+    let cur = null, curPath = '', curRows = 0;
+    const drop = () => { if (cur) { cur.remove(); cur = null; } };
+    function reopened(id) {
+      const tail = document.querySelector('[data-testid="transcript-after-rows"]');
+      const rows = document.querySelector('[data-testid="transcript-rows"]');
+      const scroller = document.querySelector('[data-testid="epitaxy-virtual-transcript"]');
+      if (!tail || !rows || !scroller) return;
+      if (location.pathname !== curPath) {
+        drop();
+        curPath = location.pathname;
+        const prev = Number(seen[id]) || lastVisit;
+        seen[id] = Date.now();
+        const keys = Object.keys(seen);
+        if (keys.length > 300) keys.sort((a, b) => seen[a] - seen[b]).slice(0, keys.length - 300).forEach(k => delete seen[k]);
+        put('sessionSeen', JSON.stringify(seen));
+        cur = makeGreeting(['> WELCOME BACK.', '  LAST LOGIN: ' + (prev ? stamp(prev) : 'UNKNOWN')]);
+        cur.box.style.margin = '24px 0 8px';
+        curRows = rows.children.length;
+      }
+      if (!cur) return;
+      // Typing or a new turn clears the greeting so it never sits between messages.
+      const input = document.querySelector('[data-testid="code-prompt-input"]');
+      if (rows.children.length > curRows || (input && input.textContent.trim())) { drop(); return; }
+      if (cur.box.parentElement !== tail) {
+        const nearBottom = scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight < 120;
+        tail.append(cur.box);
+        if (nearBottom) scroller.scrollTop = scroller.scrollHeight;
+      }
+      cur.size(scroller.clientHeight * 0.62, tail.clientWidth - 16);
+      cur.play();
+    }
+    document.addEventListener('beforeinput', e => {
+      if (cur && e.target && e.target.closest && e.target.closest('[data-testid="code-prompt-input"]')) drop();
+    }, true);
+
+    function tick() {
+      const m = location.pathname.match(/^\/code(?:\/([^/?#]+))?\/?$/);
+      if (!m) { drop(); curPath = ''; return; }
+      if (!m[1]) { drop(); curPath = ''; newSession(); return; }
+      reopened(m[1]);
+    }
+    setInterval(tick, 400);
+    addEventListener('resize', tick);
   })();
 
   // Fetch selected images from 16colo.rs through Violentmonkey; do not alter Claude's layout.
