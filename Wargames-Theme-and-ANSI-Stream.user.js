@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.11.24
+// @version      3.11.25
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C; picker: Option/Alt+Shift+P.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -2834,7 +2834,7 @@ button[data-wargames-usage]::before {
   }
 
   function shuffleCiaQueue() {
-    const queue = ARTWORKS.slice(1);
+    const queue = ARTWORKS.slice(); // 3.11.25: Darkness is no longer pinned first; it is just one of the pool
     for (let i = queue.length - 1; i > 0; i--) {
       const j = Math.floor(Math.random() * (i + 1));
       [queue[i], queue[j]] = [queue[j], queue[i]];
@@ -2910,34 +2910,35 @@ button[data-wargames-usage]::before {
   }
 
   async function loadSelection() {
-    // Darkness owns slot one. Nothing else starts until it has decoded, so
-    // network timing can never change the first artwork.
-    const darkness = ARTWORKS[0];
-    let darknessReady = false;
-    for (let attempt = 1; attempt <= 3 && !darknessReady; attempt++) {
-      darknessReady = await loadArtwork(darkness, group);
-      if (!darknessReady && attempt < 3) {
-        await new Promise(resolve => setTimeout(resolve, attempt * 1000));
-      }
+    // 3.11.25 (Boss 11/19): no fixed first artwork. Start straight from a random page,
+    // so the feed never opens on one image repeated while the rest downloads.
+    let batch = null;
+    for (let attempt = 1; attempt <= 3; attempt++) {
+      batch = await loadBatch(takeNextCiaBatch());
+      if (batch.loaded) break;
+      if (attempt < 3) await new Promise(resolve => setTimeout(resolve, attempt * 1000));
     }
 
-    if (!darknessReady) {
+    if (!batch?.loaded) {
       loading = false;
       loadFailed = true;
-      loadingMessage.textContent = '/// DARKNESS LINK FAILED';
+      loadingMessage.textContent = '/// ART LINK FAILED';
       checkSpace();
       updatePlayback();
-      console.warn('Wargames ANSI stream: Darkness could not load from 16colo.rs.');
+      console.warn('Wargames ANSI stream: first page could not load from 16colo.rs.');
       return;
     }
 
+    track.replaceChildren();
+    group = batch.staging;
+    track.append(group);
     ready = true;
     loading = false;
     loadingMessage.hidden = true;
     checkSpace();
     rebuild();
     // Decode only the next CIA page while the current page scrolls. This keeps
-    // memory bounded even with the complete 1,059-image portrait archive.
+    // memory bounded even with the complete portrait archive.
     prepareNextBatch();
   }
   // Paint the frame before beginning any network request.
