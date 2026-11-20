@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.11.26
+// @version      3.11.27
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C; picker: Option/Alt+Shift+P.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -887,8 +887,9 @@ button[data-wargames-usage]::before {
 
   // 3.11.22-23 (Boss 11/17): welcome / welcome-back terminal message. Skull = "ASCII head" by
   // littlebitspace (Mistigris, Oct 2025). New session: printed above Claude's start card.
-  // Reopened session: printed after the last message; cleared when you type or a new turn
-  // arrives. In-flow text only, never takes clicks. Toggle in the Violentmonkey menu.
+  // Reopened session: printed after the last message. 3.11.27 (Boss 11/20): while the skull is
+  // on screen, any real mouse click or key press clears it (new or reopened session); the click
+  // still goes through to whatever is under it. In-flow text only. Toggle in the Violentmonkey menu.
   (() => {
     if (window.top !== window) return;
     let on = true;
@@ -991,12 +992,17 @@ button[data-wargames-usage]::before {
     }
 
     // New session screen: above Claude's start card (environment picker).
-    const fresh = makeGreeting(lastVisit
-      ? ['> WELCOME BACK.', '  LAST LOGIN: ' + stamp(lastVisit)]
-      : ['> WELCOME.', '  FIRST LOGIN: ' + stamp(Date.now())]);
-    fresh.box.style.order = '-1';
-    fresh.box.style.marginBottom = '28px';
+    const makeFresh = () => {
+      const g = makeGreeting(lastVisit
+        ? ['> WELCOME BACK.', '  LAST LOGIN: ' + stamp(lastVisit)]
+        : ['> WELCOME.', '  FIRST LOGIN: ' + stamp(Date.now())]);
+      g.box.style.order = '-1';
+      g.box.style.marginBottom = '28px';
+      return g;
+    };
+    let fresh = makeFresh(), freshGone = false;
     function newSession() {
+      if (freshGone) return;
       const card = document.querySelector('[data-testid="epitaxy-start-card"]');
       const host = card && card.parentElement;
       if (!host) return;
@@ -1040,16 +1046,17 @@ button[data-wargames-usage]::before {
       cur.size(scroller.clientHeight * 0.62, tail.clientWidth - 16);
       cur.play();
     }
-    const inComposer = e => e.target && e.target.closest && e.target.closest('[data-testid="code-prompt-input"]');
-    const onType = e => {
-      if (!cur || !inComposer(e)) return;
-      if (e.type === 'keydown' && e.key.length !== 1 && e.key !== 'Enter' && e.key !== 'Backspace') return;
-      typed = true; drop();
+    // Any real click or key press (or a paste) clears whichever skull is showing.
+    const dismiss = e => {
+      if (!e.isTrusted) return;
+      if (cur) { typed = true; drop(); }
+      if (fresh.box.isConnected) { fresh.remove(); freshGone = true; }
     };
-    ['keydown', 'paste', 'beforeinput'].forEach(t => document.addEventListener(t, onType, true));
+    ['pointerdown', 'keydown', 'paste', 'beforeinput'].forEach(t => document.addEventListener(t, dismiss, true));
 
     function tick() {
       const m = location.pathname.match(/^\/code(?:\/([^/?#]+))?\/?$/);
+      if (!(m && !m[1]) && freshGone) { freshGone = false; fresh = makeFresh(); }   // leaving the new-session screen re-arms it
       if (!m) { drop(); curPath = ''; return; }
       if (!m[1]) { drop(); curPath = ''; newSession(); return; }
       reopened(m[1]);
