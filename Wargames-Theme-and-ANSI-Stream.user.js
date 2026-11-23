@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.11.30
+// @version      3.11.31
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C; picker: Option/Alt+Shift+P.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -48,6 +48,8 @@
       { v: '--ansi-muted', label: 'Muted text', def: '#80b59a' },
       { v: '--ansi-border', label: 'Borders', def: '#145938' },
       { v: '--ansi-bg', label: 'Page background', def: '#020805' },
+      { v: '--nfo-frame', label: 'NFO box frame', def: '#3fae7a' },
+      { v: '--nfo-bar', label: 'NFO title bars', def: '#8fffab' },
     ];
 
     const blank = () => ({ theme: {}, boxes: [] });
@@ -263,6 +265,9 @@
   --ansi-scan-opacity: .35235;
   --wargames-glow: .29;
   --wargames-vignette: .435;
+  /* 3.11.31: NFO info boxes around headed sections (style of a 1997 DiViNE .nfo). */
+  --nfo-frame: #3fae7a;
+  --nfo-bar: #8fffab;
 }
 
 :root, [data-theme="dark"], .dark {
@@ -415,6 +420,78 @@ main div:has(> [data-cds="ChatComposerEditor"]) {
 
 main :is(.prose, .font-claude-message) :is(h1, h2, h3, h4) {
   color: var(--ansi-cyan) !important;
+}
+/* 3.11.31: NFO info boxes (Boss: "recreate this style of info box", 1997 .nfo PNG).
+   Each h1-h3 in a reply becomes a shaded title bar: double frame, spaced capitals,
+   striped bars left and right. Everything after it, up to the next heading, sits
+   inside the same frame; the frame closes before the next heading or at the end.
+   CSS only: no DOM changes, so React keeps owning the message. */
+main :is(.prose, .font-claude-message) :is(h1, h2, h3) {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 1.1em !important;
+  margin: 1.4em 0 0 !important;
+  /* extra .5em on the left balances the letter-spacing after the last letter */
+  padding: .45em .7em .45em 1.2em !important;
+  border: 4px double var(--nfo-frame) !important;
+  border-bottom: 1px solid var(--nfo-frame) !important;
+  background: var(--ansi-panel) !important;
+  font-size: 1em !important;
+  font-weight: 400 !important;
+  line-height: 1.4 !important;
+  letter-spacing: .5em !important;
+  text-transform: uppercase !important;
+  text-align: center !important;
+  text-shadow: 0 0 6px #00e5ff59 !important;
+  box-shadow: 2px 2px 0 #000c !important;
+}
+main :is(.prose, .font-claude-message) :is(h1, h2, h3)::before,
+main :is(.prose, .font-claude-message) :is(h1, h2, h3)::after {
+  content: "" !important;
+  flex: 1 1 0 !important;
+  max-width: 9em !important;
+  min-width: 2.5em !important;
+  height: 1.05em !important;
+  /* thin stripes fading in, one solid bright block, stripes fading out */
+  background:
+    linear-gradient(90deg, transparent 0 38%, var(--nfo-bar) 38% 62%, transparent 62%),
+    linear-gradient(90deg, color-mix(in srgb, var(--nfo-bar) 25%, transparent),
+      color-mix(in srgb, var(--nfo-bar) 70%, transparent) 38%,
+      color-mix(in srgb, var(--nfo-bar) 70%, transparent) 62%,
+      color-mix(in srgb, var(--nfo-bar) 25%, transparent)) !important;
+  -webkit-mask: linear-gradient(90deg, transparent 0 38%, #000 38% 62%, transparent 62%),
+    repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 4px) !important;
+  mask: linear-gradient(90deg, transparent 0 38%, #000 38% 62%, transparent 62%),
+    repeating-linear-gradient(90deg, #000 0 2px, transparent 2px 4px) !important;
+  opacity: .85 !important;
+}
+main :is(.prose, .font-claude-message) :is(h1, h2, h3)::after {
+  transform: scaleX(-1) !important;
+}
+/* the section body: side walls of the frame */
+main :is(.prose, .font-claude-message) :is(h1, h2, h3) ~ :not(h1, h2, h3) {
+  margin-block: 0 !important;
+  padding: .45em 1em !important;
+  border-left: 4px double var(--nfo-frame) !important;
+  border-right: 4px double var(--nfo-frame) !important;
+  background: var(--ansi-panel) !important;
+}
+/* list bullets stay inside the frame */
+main :is(.prose, .font-claude-message) :is(h1, h2, h3) ~ :is(ul, ol) {
+  padding-left: 2.6em !important;
+  list-style-position: outside !important;
+}
+/* tables and code inside a box keep their own frame, with a little air */
+main :is(.prose, .font-claude-message) :is(h1, h2, h3) ~ :is(pre, div:has(> pre), table, div:has(> table)) {
+  padding: .6em 1em !important;
+}
+/* the bottom of the frame: last element before the next heading, or the last one */
+main :is(.prose, .font-claude-message) :is(h1, h2, h3) ~ :not(h1, h2, h3):is(:has(+ :is(h1, h2, h3)), :last-child) {
+  border-bottom: 4px double var(--nfo-frame) !important;
+  padding-bottom: .7em !important;
+  margin-bottom: 1em !important;
+  box-shadow: 2px 2px 0 #000c !important;
 }
 
 main :is(.prose, .font-claude-message, .cds-user-message-body)
