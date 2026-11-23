@@ -1,7 +1,7 @@
 // ==UserScript==
 // @name         Wargames - Theme and ANSI Art Stream
 // @namespace    wargames.local
-// @version      3.11.32
+// @version      3.11.33
 // @description  Wargames theme and ANSI stream for Claude Code; native Claude mascot preserved. Colours panel: Option/Alt+Shift+C; picker: Option/Alt+Shift+P.
 // @match        https://claude.ai/*
 // @updateURL    https://raw.githubusercontent.com/jackwalsh88/terminal/main/Wargames-Theme-and-ANSI-Stream.user.js
@@ -356,10 +356,6 @@ main .cds-user-message-body {
     2px 2px 0 #000c !important;
 }
 
-/* 3.11.32: the script pulls a bubble left when it would run under the ANSI feed. */
-main .cds-user-message-body[data-wargames-user-pull="true"] {
-  translate: var(--wargames-user-pull, 0px) 0 !important;
-}
 /* Claude's outside list markers can extend beyond the user-message border.
    Reserve a proper marker lane while preserving hanging-line alignment. */
 main .cds-user-message-body ol {
@@ -553,6 +549,12 @@ main code:not(pre code) {
    space up to the panel instead: Claude reserves the panel via margin-inline-end. */
 html:not(#wg-a):not(#wg-b):not(#wg-c) .epitaxy-chat-panel-body div[class*="--chat-column-gutter-start"] {
   max-width: none !important;
+}
+/* 3.11.33 feed gutter: with the activity panel off nothing reserved the feed's
+   column, so the transcript (max-width: none above) ran under the ANSI feed.
+   192px = feed WIDTH 160 + MARGIN 16 on both sides, same as --session-rail-end. */
+html[data-wargames-feed-shown]:not([data-wargames-rail-open]):not(#wg-a):not(#wg-b):not(#wg-c) .epitaxy-chat-panel-body div[class*="--chat-column-gutter-start"] {
+  margin-inline-end: 192px !important;
 }
 html:not(#wg-a):not(#wg-b):not(#wg-c) div[class*="pe-[calc(var(--session-rail-w)"] {
   padding-inline-start: 0 !important;
@@ -3818,33 +3820,6 @@ button[data-wargames-usage]::before {
     }
   }
 
-  // 3.11.32: with Claude's activity panel (session rail) turned off, a right-aligned
-  // user bubble could end up under the ANSI feed (Boss screenshot 11/23). Whatever
-  // the cause (Claude's own column or a stale skin shift), pull any bubble that
-  // crosses the right limit back to the left. Measured from its natural position
-  // each pass, so it lets go again when the space comes back.
-  function clampUserBubbles(rightLimit) {
-    const main = document.querySelector('main');
-    if (!main) return;
-    const limit = rightLimit - 16;
-    for (const bubble of main.querySelectorAll('.cds-user-message-body')) {
-      const rect = bubble.getBoundingClientRect();
-      if (!rect.width || !rect.height) continue;
-      const pull = parseFloat(bubble.style.getPropertyValue('--wargames-user-pull')) || 0;
-      const naturalRight = rect.right - pull;
-      const naturalLeft = rect.left - pull;
-      // never pull a bubble past the left edge of the conversation area
-      const need = Math.min(0, Math.max(limit - naturalRight, -Math.max(0, naturalLeft - 24)));
-      if (need < -0.5) {
-        bubble.style.setProperty('--wargames-user-pull', `${Math.floor(need)}px`);
-        bubble.setAttribute('data-wargames-user-pull', 'true');
-      } else if (bubble.hasAttribute('data-wargames-user-pull')) {
-        bubble.style.removeProperty('--wargames-user-pull');
-        bubble.removeAttribute('data-wargames-user-pull');
-      }
-    }
-  }
-
   function syncPromptChevron(editor) {
     if (!editor) return;
     const input = editor.matches('[contenteditable="true"]') ? editor : editor.querySelector(
@@ -3932,18 +3907,19 @@ button[data-wargames-usage]::before {
     const lower = innerHeight - BOTTOM;
     const editor = document.querySelector('[data-cds="ChatComposerEditor"]');
     syncPromptChevron(editor);
-    if (codeRoute && editor && !railPresent) {
-      widenConversation(editor, conversationRight);
-    } else if (railPresent) {
-      // Claude lays the column out itself while the rail is open; undo any skin-applied shift.
-      for (const node of document.querySelectorAll('[data-wargames-wide-column="true"], [data-wargames-assistant-column="true"]')) {
-        node.removeAttribute('data-wargames-wide-column');
-        node.removeAttribute('data-wargames-assistant-column');
-        node.style.removeProperty('--wargames-content-shift');
-        node.style.removeProperty('--wargames-assistant-shift');
-      }
+    // 3.11.33: Claude now lays the column out itself with the activity panel off
+    // too. The old widenConversation() marked the composer's inner editor instead
+    // of the whole composer (editor ran past its frame, "+" clashed with ">") and
+    // the column ran under the feed. CSS now reserves the feed's gutter instead
+    // (see "feed gutter" rule), so just undo any skin-applied shift, always.
+    for (const node of document.querySelectorAll('[data-wargames-wide-column="true"], [data-wargames-assistant-column="true"], [data-wargames-user-pull="true"]')) {
+      node.removeAttribute('data-wargames-wide-column');
+      node.removeAttribute('data-wargames-assistant-column');
+      node.removeAttribute('data-wargames-user-pull');
+      node.style.removeProperty('--wargames-content-shift');
+      node.style.removeProperty('--wargames-assistant-shift');
+      node.style.removeProperty('--wargames-user-pull');
     }
-    if (codeRoute && innerWidth >= 1100) clampUserBubbles(conversationRight);
     // The feed owns its reserved gutter for the entire Code route. Do not tie
     // visibility to Claude's transient composer/message geometry: React can
     // briefly remove or resize those nodes while loading, which made the panel
